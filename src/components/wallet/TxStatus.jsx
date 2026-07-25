@@ -5,7 +5,14 @@ import { EXPLORER_URL } from '../../lib/contracts';
  * Shows the current step while pending, the Etherscan link on success,
  * and the revert reason on error.
  */
-const TxStatus = ({ status, step, errorMessage, txHash, successLabel = 'Transaction confirmed' }) => {
+const TxStatus = ({
+  status,
+  step,
+  errorMessage,
+  txHash,
+  successLabel = 'Transaction confirmed',
+  explorerUrl = EXPLORER_URL,
+}) => {
   if (status === 'idle') return null;
 
   const base = {
@@ -48,7 +55,7 @@ const TxStatus = ({ status, step, errorMessage, txHash, successLabel = 'Transact
           <>
             {' · '}
             <a
-              href={`${EXPLORER_URL}/tx/${txHash}`}
+              href={`${explorerUrl}/tx/${txHash}`}
               target="_blank"
               rel="noreferrer"
               style={{ color: 'inherit', textDecoration: 'underline' }}
