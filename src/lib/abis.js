@@ -21,6 +21,9 @@ export const navOracleAbi = parseAbi([
 
 export const complianceNftAbi = parseAbi([
   'function balanceOf(address holder) view returns (uint256)',
+  'function owner() view returns (address)',
+  'function isOperator(address operator) view returns (bool)',
+  'function mint(address to) returns (uint256)',
 ]);
 
 export const faucetAbi = parseAbi([

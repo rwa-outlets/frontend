@@ -11,10 +11,18 @@ import InputField from '../components/ui/InputField';
 import DataTable from '../components/ui/DataTable';
 import Modal from '../components/ui/Modal';
 import TxStatus from '../components/wallet/TxStatus';
+import FaucetButton from '../components/wallet/FaucetButton';
+import KycGrantCard from '../components/wallet/KycGrantCard';
 import { formatUSD, formatTimeAgo } from '../utils/formatters';
 import { RWA_ASSETS, RWA_LIST, EXPLORER_URL } from '../lib/contracts';
 import { redemptionQueueAbi } from '../lib/abis';
-import { useQueueData, useNavs, useTokenBalances } from '../hooks/useOutletData';
+import {
+  useQueueData,
+  useNavs,
+  useTokenBalances,
+  useKyc,
+  useKycAdmin,
+} from '../hooks/useOutletData';
 import { useTxFlow } from '../hooks/useTxFlow';
 import { statusColors } from '../theme/tokens';
 
@@ -39,6 +47,10 @@ const QueuePage = () => {
   const { data: queue, isLoading } = useQueueData(selectedAsset);
   const { navs } = useNavs();
   const { balances } = useTokenBalances();
+  // Product rule: instant pool exits are open to everyone; the delayed
+  // (queue / NAV settlement) lane is the compliance lane and needs the pass.
+  const { hasKyc } = useKyc();
+  const { canGrant } = useKycAdmin();
   const requestFlow = useTxFlow();
   const claimFlow = useTxFlow();
 
@@ -51,7 +63,7 @@ const QueuePage = () => {
   const claimableShares = queue?.user?.claimableShares ?? 0;
 
   const submitRequest = async () => {
-    if (!validAmount || !address) return;
+    if (!validAmount || !address || !hasKyc) return;
     const sharesRaw = parseUnits(String(requestAmount), asset.decimals);
 
     const ok = await requestFlow.run(async ({ writeAndWait, ensureAllowance }) => {
@@ -142,6 +154,16 @@ const QueuePage = () => {
           </Button>
         </div>
       </motion.div>
+
+      {/* Compliance desk — only for the ComplianceNFT owner/operator wallet */}
+      {canGrant && (
+        <motion.div
+          variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+          style={{ marginBottom: 'var(--spacing-lg)' }}
+        >
+          <KycGrantCard />
+        </motion.div>
+      )}
 
       {/* Asset (queue) selector */}
       <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
@@ -448,6 +470,43 @@ const QueuePage = () => {
             {queue?.queueFeeBps ?? 5} bps queue fee.
           </p>
 
+          {/* Delayed lane is compliance-gated; instant pool exits stay open */}
+          {isConnected && !hasKyc && (
+            <GlassCard level={2} glow={false}>
+              <div
+                style={{
+                  padding: 'var(--spacing-md)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 'var(--spacing-md)',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <div>
+                  <div
+                    style={{
+                      fontFamily: 'var(--font-body)',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      color: '#ffb4ab',
+                    }}
+                  >
+                    KYC pass required
+                  </div>
+                  <div
+                    className="text-body-md"
+                    style={{ color: 'var(--on-surface-variant)', fontSize: '13px', marginTop: '2px' }}
+                  >
+                    Settling at full NAV is the compliance lane — your wallet needs the soulbound
+                    KYC pass. Instant redemption through the pools stays open without it.
+                  </div>
+                </div>
+                <FaucetButton size="sm" />
+              </div>
+            </GlassCard>
+          )}
+
           {/* Asset Selection */}
           <div>
             <label
@@ -572,11 +631,15 @@ const QueuePage = () => {
             variant="primary"
             size="lg"
             fullWidth
-            disabled={!isConnected || !validAmount || requestFlow.status === 'pending'}
+            disabled={!isConnected || !hasKyc || !validAmount || requestFlow.status === 'pending'}
             loading={requestFlow.status === 'pending'}
             onClick={submitRequest}
           >
-            {isConnected ? 'Submit to Queue' : 'Connect wallet first'}
+            {!isConnected
+              ? 'Connect wallet first'
+              : !hasKyc
+                ? 'KYC pass required'
+                : 'Submit to Queue'}
           </Button>
         </div>
       </Modal>

@@ -105,6 +105,26 @@ export function useKyc() {
   return { hasKyc: (data ?? 0n) > 0n, isLoading, refetch };
 }
 
+/** True when the connected wallet can issue KYC passes (ComplianceNFT owner or operator). */
+export function useKycAdmin() {
+  const { address } = useAccount();
+  const { data: owner } = useReadContract({
+    address: ADDRESSES.ComplianceNFT,
+    abi: complianceNftAbi,
+    functionName: 'owner',
+  });
+  const { data: isOperator } = useReadContract({
+    address: ADDRESSES.ComplianceNFT,
+    abi: complianceNftAbi,
+    functionName: 'isOperator',
+    args: [address],
+    query: { enabled: !!address },
+  });
+  const canGrant =
+    !!address && (owner?.toLowerCase() === address.toLowerCase() || isOperator === true);
+  return { canGrant };
+}
+
 // -------------------------------------------------------------------- faucet
 
 /** Faucet claim status (drip() mints demo tokens + the KYC pass). */
