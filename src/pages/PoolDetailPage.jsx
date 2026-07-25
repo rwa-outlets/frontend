@@ -10,6 +10,7 @@ import Chip from '../components/ui/Chip';
 import StatusDot from '../components/ui/StatusDot';
 import InputField from '../components/ui/InputField';
 import DataTable from '../components/ui/DataTable';
+import DirectionChip from '../components/ui/DirectionChip';
 import TxStatus from '../components/wallet/TxStatus';
 import { formatUSD, formatAddress, formatTimeAgo } from '../utils/formatters';
 import { poolTypes, poolTypeName } from '../data/poolTypes';
@@ -581,19 +582,6 @@ const StatRow = ({ label, value, strong = false, last = false }) => (
       {value}
     </span>
   </div>
-);
-
-export const DirectionChip = ({ direction }) => (
-  <Chip
-    variant="default"
-    value={direction.toUpperCase()}
-    size="sm"
-    style={{
-      background: direction === 'exit' ? 'rgba(0, 255, 163, 0.1)' : 'rgba(112, 0, 255, 0.1)',
-      borderColor: direction === 'exit' ? '#00ffa3' : '#7000ff',
-      color: direction === 'exit' ? '#00ffa3' : '#d1bcff',
-    }}
-  />
 );
 
 export default PoolDetailPage;
