@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useTheme } from '../theme/ThemeContext';
 import GlassCard from '../components/ui/GlassCard';
 import { streamChat } from '../lib/chatApi';
@@ -264,17 +266,23 @@ const AssistantPage = () => {
                     : 'var(--surface-glass)',
                 }}
               >
-                <p style={{
-                  margin: 0,
-                  color: message.isError
-                    ? 'var(--danger, #ff6b6b)'
-                    : message.sender === 'agent' ? 'var(--primary)' : 'var(--text-primary)',
-                  fontSize: '14px',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
-                }}>
-                  {message.text || (isStreaming ? 'Querying the subgraph…' : '')}
-                </p>
+                {message.sender === 'agent' && !message.isError && message.text ? (
+                  <div className="chat-markdown">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.text}</ReactMarkdown>
+                  </div>
+                ) : (
+                  <p style={{
+                    margin: 0,
+                    color: message.isError
+                      ? 'var(--danger, #ff6b6b)'
+                      : message.sender === 'agent' ? 'var(--primary)' : 'var(--text-primary)',
+                    fontSize: '14px',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                  }}>
+                    {message.text || (isStreaming ? 'Querying the subgraph…' : '')}
+                  </p>
+                )}
               </GlassCard>
             </motion.div>
           ))
