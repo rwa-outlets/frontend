@@ -88,7 +88,7 @@ const TopBar = () => {
               color: 'var(--text-secondary)',
               fontSize: '14px',
             }}>
-              Search tokens, pools, wallets...
+              Search with AI
             </span>
           </GlassCard>
         </div>

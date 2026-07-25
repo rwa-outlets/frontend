@@ -271,6 +271,18 @@
   box-sizing: border-box;
 }
 
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.page-content {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 html {
   font-size: 16px;
   scroll-behavior: smooth;
@@ -540,6 +552,30 @@ body {
 .card:hover {
   border-color: var(--primary-fixed-dim);
   box-shadow: 0 0 20px rgba(0, 255, 163, 0.05);
+}
+
+/* ===========================================================================
+   HEADER ACTIONS STYLES
+   =========================================================================== */
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .header-actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+
+  .header-actions .create-pool-btn,
+  .header-actions .how-pools-btn {
+    width: 100%;
+  }
 }
 
 /* ===========================================================================
@@ -1101,34 +1137,89 @@ html {
     --container-padding: 1rem;
     --topbar-height: 60px;
   }
-  
+
+  .page-content {
+    overflow-x: hidden;
+    padding: var(--spacing-md) !important;
+  }
+
+  .pool-grid,
+  .stats-grid,
+  .nav-grid,
+  .pool-summary-grid,
+  .yield-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .GlassCard {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .filter-tabs {
+    gap: var(--spacing-xs);
+  }
+
+  .filter-tabs .btn {
+    font-size: 14px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
   .text-display-xl {
     font-size: 36px;
     line-height: 44px;
   }
-  
+
   .text-headline-lg {
     font-size: var(--text-headline-lg-mobile-font-size);
     line-height: var(--text-headline-lg-mobile-line-height);
   }
-  
+
   .home-content {
-    padding: var(--spacing-2xl);
+    padding: var(--spacing-xl);
   }
-  
+
   .outlet-svg-container {
-    width: 200px;
-    height: 200px;
+    width: 80vw;
+    max-width: 300px;
+    height: 80vw;
+    max-height: 300px;
+    margin: 0 auto var(--spacing-xl);
   }
-  
+
   .table {
     display: block;
     overflow-x: auto;
   }
-  
+
   .modal {
     margin: var(--spacing-md);
     max-width: calc(100% - var(--spacing-lg));
+  }
+
+  /* Redeem Page */
+  .redeem-lane-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .big-input {
+    font-size: 24px !important;
+  }
+
+  .balance-row {
+    padding: 6px 8px !important;
+  }
+
+  .balance-row span {
+    font-size: 12px !important;
+  }
+
+  /* Dashboard */
+  .tx-hash {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100px;
   }
 }
 
@@ -1207,6 +1298,158 @@ html {
   border-radius: var(--rounded-full);
   transition: width var(--transition-normal);
   box-shadow: 0 0 10px var(--primary-container);
+}
+
+/* ===========================================================================
+   CHATBOT RESPONSIVE STYLES
+   =========================================================================== */
+
+@media (max-width: 768px) {
+  .modal {
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+  }
+
+  .chatbot-modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+  }
+}
+
+/* ===========================================================================
+   POOL PAGES RESPONSIVE STYLES
+   =========================================================================== */
+
+@media (max-width: 768px) {
+  /* Pools Page */
+  .pool-grid {
+    grid-template-columns: 1fr !important;
+    padding: 0 var(--spacing-xs) !important;
+    gap: var(--spacing-xs) !important;
+  }
+
+  /* Pool Detail Page */
+  .pool-detail-grid {
+    grid-template-columns: 1fr !important;
+    gap: var(--spacing-xs) !important;
+    padding: 0 var(--spacing-xs) !important;
+  }
+
+  /* Make DataTable responsive */
+  .DataTable {
+    width: 100% !important;
+    overflow-x: auto !important;
+    min-width: 100% !important;
+  }
+
+  .DataTable th,
+  .DataTable td {
+    padding: var(--spacing-xs) !important;
+    font-size: 11px !important;
+    min-width: 80px !important;
+  }
+
+  /* Reduce font sizes for pool detail cards */
+  .pool-detail-grid .GlassCard h3 {
+    font-size: 14px !important;
+  }
+
+  .pool-detail-grid .StatRow {
+    font-size: 11px !important;
+    padding: var(--spacing-xs) 0 !important;
+  }
+
+  /* Adjust input fields */
+  .InputField {
+    padding: var(--spacing-xs) !important;
+    font-size: 12px !important;
+    width: 100% !important;
+  }
+
+  /* Buttons */
+  .btn,
+  .Button {
+    padding: var(--spacing-xs) var(--spacing-sm) !important;
+    font-size: 12px !important;
+  }
+}
+
+/* Extra small devices (320px and below) */
+@media (max-width: 360px) {
+  :root {
+    --container-padding: 0.25rem;
+    --topbar-height: 48px;
+  }
+
+  .page-content {
+    padding: 0 !important;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .GlassCard {
+    padding: var(--spacing-xs) !important;
+    border-radius: var(--rounded-sm) !important;
+    margin-bottom: var(--spacing-xs) !important;
+  }
+
+  .text-display-xl {
+    font-size: 20px !important;
+    line-height: 28px !important;
+  }
+
+  .text-headline-lg {
+    font-size: 16px !important;
+    line-height: 22px !important;
+  }
+
+  .InputField {
+    font-size: 11px !important;
+    padding: 4px 6px !important;
+  }
+
+  .btn,
+  .Button {
+    padding: 4px 8px !important;
+    font-size: 11px !important;
+  }
+}
+
+/* ===========================================================================
+   DASHBOARD RESPONSIVE STYLES
+   =========================================================================== */
+
+@media (max-width: 768px) {
+  /* Make DataTable responsive */
+  .DataTable {
+    width: 100% !important;
+    overflow-x: auto !important;
+  }
+
+  .DataTable th,
+  .DataTable td {
+    padding: var(--spacing-xs) var(--spacing-sm) !important;
+    font-size: 12px !important;
+    min-width: 100px !important;
+  }
+
+  /* Reduce font sizes for dashboard cards */
+  .stats-grid .text-display-xl,
+  .nav-grid .text-display-xl,
+  .pool-summary-grid .text-display-xl {
+    font-size: 24px !important;
+    line-height: 32px !important;
+  }
+
+  /* Reduce padding for dashboard sections */
+  .page-content > div {
+    padding: 0 var(--spacing-sm) !important;
+  }
 }
 
 /* ===========================================================================

@@ -102,16 +102,17 @@ const ChatbotModal = ({ isOpen, onClose }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="md">
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: '80vh',
-        width: '90vw',
-        maxWidth: '400px',
-        maxHeight: '600px',
-        overflow: 'hidden',
-      }}>
+     <Modal isOpen={isOpen} onClose={onClose} size="lg">
+       <div className="chatbot-modal" style={{
+         display: 'flex',
+         flexDirection: 'column',
+         height: '80vh',
+         width: '90vw',
+         maxWidth: '600px',
+         maxHeight: '80vh',
+         overflow: 'hidden',
+         margin: '0 auto',
+       }}>
         {/* Header */}
         <div style={{
           display: 'flex',
@@ -150,13 +151,13 @@ const ChatbotModal = ({ isOpen, onClose }) => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 'var(--spacing-sm)',
-                maxWidth: '80%',
-                alignSelf: message.sender === 'agent' ? 'flex-start' : 'flex-end',
-              }}
+               style={{
+                 display: 'flex',
+                 alignItems: 'flex-start',
+                 gap: 'var(--spacing-sm)',
+                 maxWidth: '90%',
+                 alignSelf: message.sender === 'agent' ? 'flex-start' : 'flex-end',
+               }}
             >
               {message.sender === 'agent' && <AgentAvatar />}
               <GlassCard

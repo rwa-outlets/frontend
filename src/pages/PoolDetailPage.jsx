@@ -195,13 +195,17 @@ const PoolDetailPage = () => {
         </div>
       </motion.div>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 300px',
-          gap: 'var(--spacing-xl)',
-          marginBottom: 'var(--outlet-gap)',
-        }}
+       <div
+         style={{
+           display: 'grid',
+           gridTemplateColumns: '1fr',
+           gap: 'var(--spacing-md)',
+           marginBottom: 'var(--outlet-gap)',
+           padding: '0 var(--spacing-xs)',
+           width: '100%',
+           overflow: 'hidden',
+         }}
+         className="pool-detail-grid"
       >
         {/* Left Column - Swap Interface */}
         <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>

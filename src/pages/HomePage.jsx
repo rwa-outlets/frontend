@@ -101,6 +101,14 @@ const HomePage = () => {
           className="outlet-svg-container"
           style={{
             filter: 'drop-shadow(0 0 40px rgba(0, 255, 163, 0.35))',
+            width: '80vw',
+            maxWidth: '300px',
+            height: '80vw',
+            maxHeight: '300px',
+            margin: '0 auto var(--spacing-xl)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           <OutletSVG size={320} animate={true} glow={true} plugHover={isSubtitleHovered} />

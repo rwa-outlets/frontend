@@ -128,13 +128,14 @@ const PoolsPage = () => {
             </div>
           </GlassCard>
         ) : (
-          <div
-            className="pool-grid"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-              gap: 'var(--spacing-lg)',
-            }}
+            <div
+              className="pool-grid"
+              style={{ 
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+                gap: 'var(--spacing-sm)',
+                padding: '0 var(--spacing-xs)',
+              }}
           >
             {filteredPools.map((pool, index) => {
               const typeInfo = poolTypes[pool.type] ?? poolTypes.express;
