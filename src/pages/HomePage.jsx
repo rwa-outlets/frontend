@@ -120,7 +120,7 @@ const HomePage = () => {
           className="hero-title"
         >
           <h1 className="text-display-xl">
-            Aetheric Outlets
+            RWA Outlets
           </h1>
         </motion.div>
 

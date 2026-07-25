@@ -1,6 +1,6 @@
-# Aetheric Outlets - Frontend
+# RWA Outlets - Frontend
 
-A **fully functional UI shell** for RWA Outlets (branded "Aetheric Outlets") - an instant-liquidity market for tokenized real-world assets built on 1inch Aqua + SwapVM.
+A **fully functional UI shell** for RWA Outlets (branded "RWA Outlets") - an instant-liquidity market for tokenized real-world assets built on 1inch Aqua + SwapVM.
 
 ## Features
 

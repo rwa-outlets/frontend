@@ -60,7 +60,7 @@ const TopBar = () => {
 								color: "var(--primary)",
 								letterSpacing: "-0.02em",
 							}}>
-							Aetheric Outlets
+							RWA Outlets
 						</span>
 					</Link>
 				</div>

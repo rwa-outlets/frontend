@@ -1,5 +1,5 @@
 /**
- * Aetheric Outlets - Design Tokens (JavaScript Export)
+ * RWA Outlets - Design Tokens (JavaScript Export)
  * 
  * This file exports all design tokens from DESIGN.md for programmatic use
  * in React components, animations, and dynamic styling.

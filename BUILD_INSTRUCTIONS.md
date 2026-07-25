@@ -1,4 +1,4 @@
-# Build Instructions for Aetheric Outlets Frontend
+# Build Instructions for RWA Outlets Frontend
 
 ## Quick Start
 
@@ -79,7 +79,7 @@ Once the app is running, verify all features work correctly:
 - [ ] Full-screen landing page (no sidebar/topbar)
 - [ ] Animated outlet SVG renders in the center
 - [ ] Plug-in animation works
-- [ ] Hero text "Aetheric Outlets" appears
+- [ ] Hero text "RWA Outlets" appears
 - [ ] Subtitle appears
 - [ ] "Enter App" button navigates to /dashboard
 - [ ] "Learn More" button works
