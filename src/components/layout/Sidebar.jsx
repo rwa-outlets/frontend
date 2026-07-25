@@ -19,6 +19,7 @@ const navItems = [
   { path: '/pools', label: 'Pools', icon: '🏊' },
   { path: '/queue', label: 'Delayed Redemptions', icon: '🕐' },
   { path: '/vault', label: 'Vault', icon: '🔒' },
+  { path: '/portfolio', label: 'Portfolio', icon: '💼' },
   { path: '/assistant', label: 'AI Assistant', icon: '✦' },
 ];
 
