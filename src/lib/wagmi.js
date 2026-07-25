@@ -12,11 +12,13 @@ import { injected } from 'wagmi/connectors';
  * Set VITE_RPC_URL to pin a private RPC; public endpoints are the fallback.
  */
 
+// Verified working + CORS-enabled (publicnode drops connections for some
+// clients; 1rpc.io free tier is rate-limit-exhausted).
 const rpcUrls = [
   import.meta.env.VITE_RPC_URL,
-  'https://ethereum-sepolia-rpc.publicnode.com',
   'https://sepolia.drpc.org',
-  'https://1rpc.io/sepolia',
+  'https://sepolia.gateway.tenderly.co',
+  'https://eth-sepolia.api.onfinality.io/public',
 ].filter(Boolean);
 
 /**
