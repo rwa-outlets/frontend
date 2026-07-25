@@ -179,36 +179,18 @@ const HomePage = () => {
         <div className="flow-effect" />
       </motion.div>
 
-      {/* Footer info (minimal) */}
+      {/* Footer info (minimal) — pinned on desktop, in-flow on mobile (CSS) */}
       <motion.div
         className="home-footer"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.5 }}
-        style={{
-          position: 'absolute',
-          bottom: '40px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          color: 'var(--on-surface-variant)',
-          fontFamily: 'var(--font-mono)',
-          fontSize: '12px',
-        }}
       >
         @2026 ETH Lisbon
       </motion.div>
 
-      {/* Floating action buttons / indicators */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '20px',
-          right: '20px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '10px',
-        }}
-      >
+      {/* Version badge — pinned on desktop, in-flow on mobile (CSS) */}
+      <div className="home-version">
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}

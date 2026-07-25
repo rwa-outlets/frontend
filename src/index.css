@@ -1711,3 +1711,58 @@ html {
   border-top: 1px solid var(--border-glass);
   margin: 10px 0;
 }
+
+/* ===========================================================================
+   HOME PAGE FOOTER / VERSION — pinned on desktop, in-flow on small screens
+   =========================================================================== */
+
+.home-footer {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--on-surface-variant);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  z-index: 1;
+}
+
+.home-version {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1;
+}
+
+@media (max-width: 768px) {
+  /* Content can reach the bottom of the viewport on phones — the pinned
+     footer/badge would sit on top of the partner logos. Flow them instead. */
+  .home-footer {
+    position: static;
+    transform: none;
+    text-align: center;
+    margin-top: var(--spacing-xl);
+  }
+
+  .home-version {
+    position: static;
+    align-items: center;
+    margin: var(--spacing-sm) 0 var(--spacing-lg);
+  }
+
+  /* Tighter partner strip so it breathes on narrow screens */
+  .partner-strip {
+    margin-top: var(--spacing-xl);
+  }
+
+  .partner-strip-row {
+    gap: var(--spacing-xs);
+  }
+
+  .partner-logo-item {
+    padding: 6px 10px;
+  }
+}

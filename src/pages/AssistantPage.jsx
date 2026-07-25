@@ -23,22 +23,22 @@ const AVATAR_STILL = '/agent/character-still.png';
 
 const SUGGESTIONS = [
   {
-    icon: '📊',
+    icon: '💧',
     tint: 'rgba(0, 163, 255, 0.15)',
-    label: 'Protocol overview',
-    prompt: 'Give me a protocol overview: total swaps, overall volume, and the latest NAV updates for each asset.',
+    label: 'Where to LP',
+    prompt: 'Which pool should I provide liquidity to right now — Express (rwaTBILL) or Patient (rwaCREDIT)? Compare recent swap volume and how exits priced vs NAV, then recommend one.',
   },
   {
-    icon: '🔁',
+    icon: '⚖️',
     tint: 'rgba(255, 0, 163, 0.12)',
-    label: 'Recent swap activity',
-    prompt: 'Show me the most recent swaps with their amounts and how they priced versus NAV.',
+    label: 'Instant exit vs queue',
+    prompt: 'I hold rwaTBILL. Should I exit instantly through a pool or queue a delayed redemption? Use recent execution rates vs NAV to estimate what each path costs me.',
   },
   {
-    icon: '🕐',
+    icon: '📈',
     tint: 'rgba(255, 196, 0, 0.15)',
-    label: 'Redemptions & queues',
-    prompt: 'What is the current state of redemptions — recent requests, amounts, and anything pending?',
+    label: 'NAV trend check',
+    prompt: 'How have rwaTBILL and rwaCREDIT NAVs moved recently, and are pool exits clearing tighter or wider vs NAV? Is now a good time to sell?',
   },
 ];
 
