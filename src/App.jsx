@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import Sidebar from './components/layout/Sidebar';
 import TopBar from './components/layout/TopBar';
 import PageWrapper from './components/layout/PageWrapper';
+import ChatbotLauncher from './components/ui/ChatbotLauncher';
 import './index.css';
 
 /**
@@ -27,6 +28,7 @@ function App() {
           </PageWrapper>
         </main>
       </div>
+      <ChatbotLauncher />
     </div>
   );
 }

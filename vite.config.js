@@ -31,6 +31,14 @@ export default defineConfig(({ mode }) => {
             'x-universal-router-version': '2.0',
           },
         },
+        // RWA Outlets backend (chat agent, /api/v1/*). Same-origin in dev via
+        // this proxy; in production the ingress routes /api/* to the backend.
+        // Note the backend defaults to port 3000 too — start it first and Vite
+        // will auto-bump itself to 3001.
+        '/api/v1': {
+          target: env.BACKEND_URL || 'http://localhost:3000',
+          changeOrigin: true,
+        },
       },
     },
   }
