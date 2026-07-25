@@ -338,17 +338,22 @@ export function useLivePools() {
 
 /**
  * Best-of quote through OutletRouter — the exact quote redeemInstant()/buy()
- * executes. direction: 'exit' (RWA→USDC) or 'entry' (USDC→RWA).
+ * executes, across Aqua listings AND the Uniswap v4 fallback venue
+ * (quoteInstantAll/quoteBuyAll; non-view but readable via eth_call).
+ * direction: 'exit' (RWA→USDC) or 'entry' (USDC→RWA). The connected address is
+ * part of the quote: the v4 pool's compliance hook checks it — without a KYC
+ * pass the router silently drops the v4 venue and quotes Aqua only.
  */
 export function useSwapQuote(assetId, direction, amountInput) {
   const config = useConfig();
+  const { address } = useAccount();
   const debounced = useDebouncedValue(amountInput, 350);
   const asset = RWA_ASSETS[assetId];
   const amountNum = Number(debounced);
   const enabled = !!asset && Number.isFinite(amountNum) && amountNum > 0;
 
   return useQuery({
-    queryKey: ['swap-quote', assetId, direction, String(debounced)],
+    queryKey: ['swap-quote', assetId, direction, String(debounced), address ?? 'anon'],
     enabled,
     refetchInterval: 12_000,
     queryFn: async () => {
@@ -356,11 +361,15 @@ export function useSwapQuote(assetId, direction, amountInput) {
       const outDecimals = direction === 'exit' ? USDC.decimals : asset.decimals;
       const amountRaw = parseUnits(String(debounced), inDecimals);
 
-      const [bestHash, bestOut] = await readContract(config, {
+      const [bestHash, bestOut, viaV4] = await readContract(config, {
         address: ADDRESSES.OutletRouter,
         abi: outletRouterAbi,
-        functionName: direction === 'exit' ? 'quoteInstant' : 'quoteBuy',
-        args: [asset.address, amountRaw],
+        functionName: direction === 'exit' ? 'quoteInstantAll' : 'quoteBuyAll',
+        args: [
+          asset.address,
+          amountRaw,
+          address ?? '0x000000000000000000000000000000000000dEaD',
+        ],
       });
 
       const out = toFloat(bestOut, outDecimals);
@@ -372,7 +381,7 @@ export function useSwapQuote(assetId, direction, amountInput) {
           : amountNum / out
         : 0;
 
-      return { bestHash, bestOutRaw: bestOut, amountRaw, out, rate, executable };
+      return { bestHash, bestOutRaw: bestOut, amountRaw, out, rate, executable, viaV4 };
     },
   });
 }

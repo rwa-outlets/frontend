@@ -8,7 +8,7 @@ A **fully functional UI shell** for RWA Outlets (branded "Aetheric Outlets") - a
 - **Dark/Light Mode**: Theme toggle with auto-inversion for light mode
 - **Responsive Layout**: Works on desktop, tablet, and mobile
 - **Animated Components**: Framer Motion for smooth transitions and animations
-- **Mock Data**: Realistic data based on architecture specifications
+- **Live Onchain Data**: every page reads the deployed Sepolia contracts (NAV oracle, vault treasuries, Aqua shipped balances, router best-of quotes incl. the Uniswap v4 venue, queue epochs, Trade event history) — plus live mainnet quotes via the Uniswap Trading API
 
 ## Uniswap API integration (hackathon: Best Uniswap API Integration)
 

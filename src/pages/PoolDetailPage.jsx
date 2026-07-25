@@ -377,6 +377,12 @@ const PoolDetailPage = () => {
                       </span>
                     )}
                     {' · '}max slippage {Number(SLIPPAGE_BPS)} bps
+                    {quoteData.viaV4 && (
+                      <span style={{ color: 'var(--neon-pink, #ff6ec7)' }}>
+                        {' '}
+                        · fills via Uniswap v4 pool
+                      </span>
+                    )}
                   </div>
                 )}
               </div>

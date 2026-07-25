@@ -39,6 +39,10 @@ export const faucetAbi = parseAbi([
 export const outletRouterAbi = parseAbi([
   'function quoteInstant(address asset, uint256 amount) view returns (bytes32 bestHash, uint256 bestOut)',
   'function quoteBuy(address asset, uint256 usdcIn) view returns (bytes32 bestHash, uint256 bestOut)',
+  // non-view (the v4 quoter simulates via revert) but readable through eth_call —
+  // the exact quote redeemInstant()/buy() executes, INCLUDING the Uniswap v4 venue
+  'function quoteInstantAll(address asset, uint256 amount, address user) returns (bytes32 bestHash, uint256 bestOut, bool viaV4)',
+  'function quoteBuyAll(address asset, uint256 usdcIn, address user) returns (bytes32 bestHash, uint256 bestOut, bool viaV4)',
   'function redeemInstant(address asset, uint256 amount, uint256 minOut) returns (uint256 usdcOut)',
   'function buy(address asset, uint256 usdcIn, uint256 minOut) returns (uint256 assetOut)',
   'function enqueue(address asset, uint256 amount) returns (uint256 epoch)',
