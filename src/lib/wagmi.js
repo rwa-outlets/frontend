@@ -19,6 +19,13 @@ const rpcUrls = [
   'https://1rpc.io/sepolia',
 ].filter(Boolean);
 
+/**
+ * eth_getLogs needs different endpoints than plain reads: publicnode gates
+ * historical logs behind a token, while drpc allows ≤10k-block ranges free.
+ */
+export const LOGS_RPC_URL = import.meta.env.VITE_RPC_URL || 'https://sepolia.drpc.org';
+export const LOGS_MAX_RANGE = 9_500n;
+
 export const CHAIN = sepolia;
 
 export const wagmiConfig = createConfig({

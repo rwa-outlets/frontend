@@ -1,7 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAccount, useConfig, useReadContract, useReadContracts } from 'wagmi';
-import { readContract, readContracts, getPublicClient } from 'wagmi/actions';
-import { formatUnits, parseUnits } from 'viem';
+import { readContract, readContracts } from 'wagmi/actions';
+import { createPublicClient, http, formatUnits, parseUnits } from 'viem';
+import { sepolia } from 'viem/chains';
+import { LOGS_RPC_URL, LOGS_MAX_RANGE } from '../lib/wagmi';
 import {
   ADDRESSES,
   USDC,
@@ -621,25 +623,39 @@ const tradeEvents = outletRouterAbi.filter(
   (item) => item.type === 'event' && (item.name === 'InstantExit' || item.name === 'Purchase'),
 );
 
+// Dedicated client for eth_getLogs — free public RPCs cap ranges (drpc: 10k
+// blocks) or gate history entirely (publicnode), so scan in chunks.
+const logsClient = createPublicClient({
+  chain: sepolia,
+  transport: http(LOGS_RPC_URL, { batch: true }),
+});
+const LOG_CHUNKS = 3; // ~3 × 9.5k blocks ≈ 4 days of Sepolia history
+
 /** Recent InstantExit/Purchase fills from OutletRouter logs (bounded window). */
 export function useTradeHistory(limit = 15) {
-  const config = useConfig();
-
   return useQuery({
     queryKey: ['trade-history', limit],
     refetchInterval: 30_000,
     queryFn: async () => {
       try {
-        const client = getPublicClient(config);
+        const client = logsClient;
         const latest = await client.getBlockNumber();
-        const fromBlock = latest > 40_000n ? latest - 40_000n : 0n;
 
-        const logs = await client.getLogs({
-          address: ADDRESSES.OutletRouter,
-          events: tradeEvents,
-          fromBlock,
-          toBlock: latest,
-        });
+        // newest chunk first, stop early once we have enough fills
+        const logs = [];
+        for (let i = 0; i < LOG_CHUNKS && logs.length < limit; i++) {
+          const toBlock = latest - LOGS_MAX_RANGE * BigInt(i);
+          if (toBlock <= 0n) break;
+          const fromBlock =
+            toBlock > LOGS_MAX_RANGE ? toBlock - LOGS_MAX_RANGE + 1n : 0n;
+          const chunk = await client.getLogs({
+            address: ADDRESSES.OutletRouter,
+            events: tradeEvents,
+            fromBlock,
+            toBlock,
+          });
+          logs.unshift(...chunk);
+        }
 
         const recent = logs.slice(-limit).reverse();
         const blockNumbers = [...new Set(recent.map((l) => l.blockNumber))];
