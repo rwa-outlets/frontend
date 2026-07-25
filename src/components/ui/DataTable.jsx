@@ -35,8 +35,23 @@ const DataTable = ({
   const { isDark } = useTheme();
   const currentTokens = isDark ? tokens.dark : tokens.light;
   
-  const [sortBy, setSortBy] = useState(initialSortBy || columns[0]?.key);
+  // Only auto-sort by a column that opted into sorting — cell values are often
+  // React elements, which must never reach the comparator by default.
+  const [sortBy, setSortBy] = useState(
+    initialSortBy || columns.find((c) => c.sortable)?.key,
+  );
   const [sortDirection, setSortDirection] = useState(initialSortDirection);
+
+  // React elements (and other cyclic objects) can't be JSON.stringify'd
+  const toSortableString = (val) => {
+    if (val === null || val === undefined) return '';
+    if (typeof val !== 'object') return String(val);
+    try {
+      return JSON.stringify(val) ?? '';
+    } catch {
+      return '';
+    }
+  };
 
   // Sort data
   const sortedData = useMemo(() => {
@@ -46,9 +61,8 @@ const DataTable = ({
       const aVal = a[sortBy];
       const bVal = b[sortBy];
       
-      // Handle nested objects
-      const aStr = typeof aVal === 'object' ? JSON.stringify(aVal) : String(aVal);
-      const bStr = typeof bVal === 'object' ? JSON.stringify(bVal) : String(bVal);
+      const aStr = toSortableString(aVal);
+      const bStr = toSortableString(bVal);
       
       if (aStr < bStr) return sortDirection === 'asc' ? -1 : 1;
       if (aStr > bStr) return sortDirection === 'asc' ? 1 : -1;
