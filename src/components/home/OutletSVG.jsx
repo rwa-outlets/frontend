@@ -14,7 +14,7 @@ import { motion } from 'framer-motion';
  * - className: string - Additional CSS classes
  */
 
-const OutletSVG = ({ size = 300, animate = true, glow = true, className = '' }) => {
+const OutletSVG = ({ size = 300, animate = true, glow = true, className = '', plugHover = false }) => {
   const { isDark } = useTheme();
 
   // Calculate dimensions based on size
@@ -33,6 +33,20 @@ const OutletSVG = ({ size = 300, animate = true, glow = true, className = '' }) 
       },
     },
   } : {};
+
+  // Hover animation for plug - moves up and flashes cyan-green
+  const plugHoverVariants = {
+    hovered: {
+      y: -10,
+      fill: '#00ffa3',
+      transition: { duration: 0.3 }
+    },
+    normal: {
+      y: 0,
+      fill: isDark ? '#00FF94' : '#005231',
+      transition: { duration: 0.3 }
+    }
+  };
 
   // Outlet glow effect
   const outletGlow = glow ? {
@@ -124,30 +138,37 @@ const OutletSVG = ({ size = 300, animate = true, glow = true, className = '' }) 
         <motion.g
           animate={animate ? "plugged" : undefined}
           variants={plugVariants}
+          style={{ y: plugHover ? -10 : 0 }}
         >
           {/* Plug body */}
-          <rect
-            fill={isDark ? '#00FF94' : '#005231'}
+          <motion.rect
+            fill={plugHover ? '#00ffa3' : (isDark ? '#00FF94' : '#005231')}
             height="40"
             rx="5"
             width="50"
             x="75"
             y="170"
+            animate={plugHover ? "hovered" : "normal"}
+            variants={plugHoverVariants}
           />
           {/* Plug prongs */}
-          <rect
-            fill={isDark ? '#00FF94' : '#005231'}
+          <motion.rect
+            fill={plugHover ? '#00ffa3' : (isDark ? '#00FF94' : '#005231')}
             height="15"
             width="6"
             x="85"
             y="155"
+            animate={plugHover ? "hovered" : "normal"}
+            variants={plugHoverVariants}
           />
-          <rect
-            fill={isDark ? '#00FF94' : '#005231'}
+          <motion.rect
+            fill={plugHover ? '#00ffa3' : (isDark ? '#00FF94' : '#005231')}
             height="15"
             width="6"
             x="109"
             y="155"
+            animate={plugHover ? "hovered" : "normal"}
+            variants={plugHoverVariants}
           />
         </motion.g>
 

@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import OutletSVG from '../components/home/OutletSVG';
 import Button from '../components/ui/Button';
 import { useTheme } from '../theme/ThemeContext';
@@ -18,6 +19,7 @@ import { useTheme } from '../theme/ThemeContext';
 const HomePage = () => {
   const { isDark } = useTheme();
   const navigate = useNavigate();
+  const [isSubtitleHovered, setIsSubtitleHovered] = useState(false);
 
   // Animation variants
   const containerVariants = {
@@ -100,7 +102,7 @@ const HomePage = () => {
             filter: 'drop-shadow(0 0 40px rgba(0, 255, 163, 0.35))',
           }}
         >
-          <OutletSVG size={320} animate={true} glow={true} />
+          <OutletSVG size={320} animate={true} glow={true} plugHover={isSubtitleHovered} />
         </motion.div>
 
         {/* Hero Text */}
@@ -117,15 +119,23 @@ const HomePage = () => {
         <motion.p
           variants={itemVariants}
           className="hero-subtitle text-body-md"
+          onHoverStart={() => setIsSubtitleHovered(true)}
+          onHoverEnd={() => setIsSubtitleHovered(false)}
         >
-          Instant liquidity for tokenized real-world assets. Powered by
-          <span style={{
-            color: 'var(--primary-container)',
-            fontWeight: '600',
-            marginLeft: '6px',
-          }}>
-            1inch Aqua + SwapVM
-          </span>.
+          Instant liquidity for tokenized real-world assets.Powered by
+          <motion.span
+            style={{
+              color: 'var(--primary-container)',
+              fontWeight: '600',
+              marginLeft: '6px',
+            }}
+            whileHover={{
+              color: '#00ffa3',
+              transition: { duration: 0.3 }
+            }}
+          >
+            The Graph, Uniswap, and 1inch
+          </motion.span>.
         </motion.p>
 
         {/* CTA Buttons */}
@@ -171,7 +181,7 @@ const HomePage = () => {
           fontSize: '12px',
         }}
       >
-        Powered by 1inch Aqua • SwapVM • The Graph
+        @2026 ETH Lisbon
       </motion.div>
 
       {/* Floating action buttons / indicators */}
