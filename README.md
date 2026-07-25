@@ -10,6 +10,38 @@ A **fully functional UI shell** for RWA Outlets (branded "Aetheric Outlets") - a
 - **Animated Components**: Framer Motion for smooth transitions and animations
 - **Mock Data**: Realistic data based on architecture specifications
 
+## Uniswap API integration (hackathon: Best Uniswap API Integration)
+
+The **Uniswap Trading API** (Uniswap Developer Platform, `x-api-key`-authenticated) is the
+routing + execution rail of the app's secondary-market lane. Each Sepolia demo RWA maps to its
+live mainnet **production twin** (rwaTBILL → USDY, rwaCREDIT → USDe); every quote the user takes
+on our own onchain venues is priced against the Uniswap route for the same size, and the winning
+venue is shown in bps — the same best-of arbitration our onchain router performs, extended to
+Uniswap's permissionless liquidity. Swaps execute end-to-end through the API.
+
+**Where the integration lives:**
+
+| Piece | File | What it does |
+|---|---|---|
+| Trading API client | [`src/lib/uniswapTradingApi.js`](src/lib/uniswapTradingApi.js) | `check_approval → quote → swap` flow; routing-aware request builder (`prepareSwapRequest`), CLASSIC vs UniswapX output normalization (`getOutputAmountRaw`), pre-broadcast validation, EIP-712 primary-type inference for `permitData` |
+| Quote + execution hooks | [`src/hooks/useUniswapLane.js`](src/hooks/useUniswapLane.js) | `useUniswapLaneQuote` (live quote, 20 s refresh inside the quote-validity window), `useUniswapLaneExecute` (chain switch → approval tx → fresh quote → permit signing → swap broadcast / gasless UniswapX submission) |
+| Venue-comparison UI | [`src/components/pools/UniswapLaneCard.jsx`](src/components/pools/UniswapLaneCard.jsx) | Side-by-side vs the outlet quote (+/− bps), routing badge (CLASSIC / UniswapX gasless), execute button |
+| Mainnet twin registry | [`src/data/uniswapLane.js`](src/data/uniswapLane.js) | Demo-asset → live-RWA mapping quoted through the API |
+| API-key proxy | [`vite.config.js`](vite.config.js) | Same-origin `/api/uniswap` proxy injecting `x-api-key` + `x-universal-router-version` server-side (the key never reaches the browser; the API has no CORS preflight support) |
+
+**Onchain half** (repo [`rwa-outlet-contracts-core`](https://github.com/rwa-outlets/rwa-outlet-contracts-core)):
+the same lane runs as a Uniswap **v4 pool with a custom hook** — `src/RWAGateHook.sol`
+(compliance gate + TWAP oracle), `src/V4Venue.sol` (v4 execution leg: quote via official
+`V4Quoter`, swap via `unlockCallback`), and `src/OutletRouter.sol` (`quoteInstantAll`/
+`quoteBuyAll`, `redeemInstant`, `buy` — best-of routing between our AMM pools and Uniswap).
+
+**Setup:** get an API key at [developers.uniswap.org](https://developers.uniswap.org/), put it in
+`.env` as `UNISWAP_API_KEY=` (no `VITE_` prefix — see `.env.example`), restart the dev server. In
+production, replicate the `/api/uniswap` rewrite + header injection in your host config
+(nginx `proxy_set_header`, or a `vercel.json` rewrite).
+
+Developer feedback for the Uniswap team: [FEEDBACK.md](FEEDBACK.md).
+
 ## Tech Stack
 
 - **Framework**: React 18 + Vite 5

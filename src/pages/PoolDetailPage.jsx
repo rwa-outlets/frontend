@@ -12,6 +12,7 @@ import InputField from '../components/ui/InputField';
 import DataTable from '../components/ui/DataTable';
 import DirectionChip from '../components/ui/DirectionChip';
 import TxStatus from '../components/wallet/TxStatus';
+import UniswapLaneCard from '../components/pools/UniswapLaneCard';
 import { formatUSD, formatAddress, formatTimeAgo } from '../utils/formatters';
 import { poolTypes, poolTypeName } from '../data/poolTypes';
 import { ADDRESSES, USDC, EXPLORER_URL } from '../lib/contracts';
@@ -433,6 +434,16 @@ const PoolDetailPage = () => {
               )}
             </div>
           </GlassCard>
+
+          {/* Uniswap API secondary lane — quotes/executes the asset's mainnet twin */}
+          <div style={{ marginTop: 'var(--spacing-lg)' }}>
+            <UniswapLaneCard
+              assetId={asset.id}
+              direction={direction}
+              sendAmount={sendAmount}
+              outletRate={quoteData?.executable ? quoteData.rate : null}
+            />
+          </div>
         </motion.div>
 
         {/* Right Column - Pool Stats */}

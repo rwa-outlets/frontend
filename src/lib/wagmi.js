@@ -1,5 +1,5 @@
 import { http, createConfig, fallback } from 'wagmi';
-import { sepolia } from 'wagmi/chains';
+import { mainnet, sepolia } from 'wagmi/chains';
 import { injected } from 'wagmi/connectors';
 
 /**
@@ -31,9 +31,12 @@ export const LOGS_MAX_RANGE = 9_500n;
 export const CHAIN = sepolia;
 
 export const wagmiConfig = createConfig({
-  chains: [sepolia],
+  // mainnet is only used by the Uniswap Trading API lane (see
+  // hooks/useUniswapLane.js) — the outlet stack itself is Sepolia-only.
+  chains: [sepolia, mainnet],
   connectors: [injected()],
   transports: {
     [sepolia.id]: fallback(rpcUrls.map((url) => http(url, { batch: true }))),
+    [mainnet.id]: http(),
   },
 });
