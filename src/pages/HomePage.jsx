@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import OutletSVG from '../components/home/OutletSVG';
+import PartnerLogos from '../components/home/PartnerLogos';
 import Button from '../components/ui/Button';
 import { useTheme } from '../theme/ThemeContext';
 
@@ -122,7 +123,7 @@ const HomePage = () => {
           onHoverStart={() => setIsSubtitleHovered(true)}
           onHoverEnd={() => setIsSubtitleHovered(false)}
         >
-          Instant liquidity for tokenized real-world assets.Powered by
+          Instant liquidity for tokenized real-world assets. Powered by
           <motion.span
             style={{
               color: 'var(--primary-container)',
@@ -134,7 +135,7 @@ const HomePage = () => {
               transition: { duration: 0.3 }
             }}
           >
-            The Graph, Uniswap, and 1inch
+            The Graph, Uniswap, 1inch, and ENS
           </motion.span>.
         </motion.p>
 
@@ -148,7 +149,7 @@ const HomePage = () => {
             size="lg"
             onClick={() => navigate('/redeem')}
           >
-            <span>Enter App</span>
+            <span>Redeem RWA</span>
             <span>→</span>
           </Button>
           
@@ -159,6 +160,11 @@ const HomePage = () => {
           >
             <span>Explore Pools</span>
           </Button>
+        </motion.div>
+
+        {/* Partner / integrations strip */}
+        <motion.div variants={itemVariants}>
+          <PartnerLogos />
         </motion.div>
 
         {/* Flow effect - Animated gradient lines */}

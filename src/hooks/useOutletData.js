@@ -25,6 +25,7 @@ import {
   aquaAbi,
 } from '../lib/abis';
 import { useDebouncedValue } from './useDebouncedValue';
+import { querySubgraph } from '../lib/subgraph';
 
 const ZERO_HASH = '0x0000000000000000000000000000000000000000000000000000000000000000';
 
@@ -660,71 +661,132 @@ const logsClient = createPublicClient({
 });
 const LOG_CHUNKS = 3; // ~3 × 9.5k blocks ≈ 4 days of Sepolia history
 
-/** Recent InstantExit/Purchase fills from OutletRouter logs (bounded window). */
+const TRADES_QUERY = /* GraphQL */ `
+  query RecentTrades($limit: Int!) {
+    trades(first: $limit, orderBy: timestamp, orderDirection: desc) {
+      id
+      isExit
+      taker
+      amountIn
+      amountOut
+      rate1e18
+      rateVsNavBps
+      timestamp
+      txHash
+      strategy {
+        id
+      }
+      asset {
+        id
+      }
+    }
+  }
+`;
+
+/** Full-history pool fills from the subgraph (NavExtruction.Trade events). */
+async function fetchTradesFromSubgraph(limit) {
+  const data = await querySubgraph(TRADES_QUERY, { limit });
+  return data.trades
+    .map((t) => {
+      const asset = assetByAddress(t.asset.id);
+      if (!asset) return null;
+      const rwaAmount = toFloat(BigInt(t.isExit ? t.amountIn : t.amountOut), asset.decimals);
+      const usdcAmount = toFloat(BigInt(t.isExit ? t.amountOut : t.amountIn), USDC.decimals);
+      return {
+        id: t.id,
+        direction: t.isExit ? 'exit' : 'entry',
+        asset,
+        user: t.taker,
+        orderHash: t.strategy?.id,
+        rwaAmount,
+        usdcAmount,
+        rate: toFloat(BigInt(t.rate1e18), 18),
+        // negative = executed below oracle NAV (the instant-exit discount)
+        discountBps: Number(t.rateVsNavBps),
+        timestamp: Number(t.timestamp),
+        txHash: t.txHash,
+      };
+    })
+    .filter(Boolean);
+}
+
+/** RPC fallback: InstantExit/Purchase from OutletRouter logs (bounded window). */
+async function fetchTradesFromLogs(limit) {
+  const client = logsClient;
+  const latest = await client.getBlockNumber();
+
+  // newest chunk first, stop early once we have enough fills
+  const logs = [];
+  for (let i = 0; i < LOG_CHUNKS && logs.length < limit; i++) {
+    const toBlock = latest - LOGS_MAX_RANGE * BigInt(i);
+    if (toBlock <= 0n) break;
+    const fromBlock = toBlock > LOGS_MAX_RANGE ? toBlock - LOGS_MAX_RANGE + 1n : 0n;
+    const chunk = await client.getLogs({
+      address: ADDRESSES.OutletRouter,
+      events: tradeEvents,
+      fromBlock,
+      toBlock,
+    });
+    logs.unshift(...chunk);
+  }
+
+  const recent = logs.slice(-limit).reverse();
+  const blockNumbers = [...new Set(recent.map((l) => l.blockNumber))];
+  const blocks = await Promise.all(
+    blockNumbers.map((bn) => client.getBlock({ blockNumber: bn })),
+  );
+  const tsByBlock = Object.fromEntries(
+    blocks.map((b) => [String(b.number), Number(b.timestamp)]),
+  );
+
+  return recent
+    .map((log) => {
+      const asset = assetByAddress(log.args.asset);
+      if (!asset) return null;
+      const isExit = log.eventName === 'InstantExit';
+      const rwaAmount = toFloat(
+        isExit ? log.args.assetIn : log.args.assetOut,
+        asset.decimals,
+      );
+      const usdcAmount = toFloat(
+        isExit ? log.args.usdcOut : log.args.usdcIn,
+        USDC.decimals,
+      );
+      return {
+        id: `${log.transactionHash}-${log.logIndex}`,
+        direction: isExit ? 'exit' : 'entry',
+        asset,
+        user: log.args.user,
+        orderHash: log.args.orderHash,
+        rwaAmount,
+        usdcAmount,
+        rate: rwaAmount > 0 ? usdcAmount / rwaAmount : 0,
+        timestamp: tsByBlock[String(log.blockNumber)] ?? null,
+        txHash: log.transactionHash,
+      };
+    })
+    .filter(Boolean);
+}
+
+/**
+ * Recent pool fills — subgraph first (fast, full history, includes fills from
+ * every router), RPC log scan as fallback when the subgraph is unreachable.
+ */
 export function useTradeHistory(limit = 15) {
   return useQuery({
     queryKey: ['trade-history', limit],
     refetchInterval: 30_000,
     queryFn: async () => {
       try {
-        const client = logsClient;
-        const latest = await client.getBlockNumber();
-
-        // newest chunk first, stop early once we have enough fills
-        const logs = [];
-        for (let i = 0; i < LOG_CHUNKS && logs.length < limit; i++) {
-          const toBlock = latest - LOGS_MAX_RANGE * BigInt(i);
-          if (toBlock <= 0n) break;
-          const fromBlock =
-            toBlock > LOGS_MAX_RANGE ? toBlock - LOGS_MAX_RANGE + 1n : 0n;
-          const chunk = await client.getLogs({
-            address: ADDRESSES.OutletRouter,
-            events: tradeEvents,
-            fromBlock,
-            toBlock,
-          });
-          logs.unshift(...chunk);
-        }
-
-        const recent = logs.slice(-limit).reverse();
-        const blockNumbers = [...new Set(recent.map((l) => l.blockNumber))];
-        const blocks = await Promise.all(
-          blockNumbers.map((bn) => client.getBlock({ blockNumber: bn })),
-        );
-        const tsByBlock = Object.fromEntries(
-          blocks.map((b) => [String(b.number), Number(b.timestamp)]),
-        );
-
-        return recent
-          .map((log) => {
-            const asset = assetByAddress(log.args.asset);
-            if (!asset) return null;
-            const isExit = log.eventName === 'InstantExit';
-            const rwaAmount = toFloat(
-              isExit ? log.args.assetIn : log.args.assetOut,
-              asset.decimals,
-            );
-            const usdcAmount = toFloat(
-              isExit ? log.args.usdcOut : log.args.usdcIn,
-              USDC.decimals,
-            );
-            return {
-              id: `${log.transactionHash}-${log.logIndex}`,
-              direction: isExit ? 'exit' : 'entry',
-              asset,
-              user: log.args.user,
-              orderHash: log.args.orderHash,
-              rwaAmount,
-              usdcAmount,
-              rate: rwaAmount > 0 ? usdcAmount / rwaAmount : 0,
-              timestamp: tsByBlock[String(log.blockNumber)] ?? null,
-              txHash: log.transactionHash,
-            };
-          })
-          .filter(Boolean);
+        return await fetchTradesFromSubgraph(limit);
       } catch (err) {
-        console.warn('trade history unavailable:', err);
-        return [];
+        console.warn('subgraph unavailable, falling back to log scan:', err);
+        try {
+          return await fetchTradesFromLogs(limit);
+        } catch (rpcErr) {
+          console.warn('trade history unavailable:', rpcErr);
+          return [];
+        }
       }
     },
   });

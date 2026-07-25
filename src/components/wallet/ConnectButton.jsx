@@ -1,10 +1,28 @@
 import { useState, useRef, useEffect } from 'react';
-import { useAccount, useConnect, useDisconnect, useSwitchChain, useBalance } from 'wagmi';
+import {
+  useAccount,
+  useConnect,
+  useDisconnect,
+  useSwitchChain,
+  useBalance,
+  useEnsName,
+  useEnsAvatar,
+} from 'wagmi';
+import { mainnet } from 'wagmi/chains';
 import { formatUnits } from 'viem';
+import { normalize } from 'viem/ens';
 import Button from '../ui/Button';
 import { CHAIN } from '../../lib/wagmi';
 import { EXPLORER_URL } from '../../lib/contracts';
 import { formatAddress } from '../../utils/formatters';
+
+const safeNormalize = (name) => {
+  try {
+    return normalize(name);
+  } catch {
+    return undefined;
+  }
+};
 
 /**
  * ConnectButton — wallet auth entry point.
@@ -12,7 +30,8 @@ import { formatAddress } from '../../utils/formatters';
  * States:
  * - disconnected → "Connect Wallet" (injected / EIP-6963 wallets)
  * - connected on wrong chain → "Switch to Sepolia"
- * - connected → truncated address with a small dropdown (Etherscan, copy, disconnect)
+ * - connected → ENS name (or truncated address) with a small dropdown
+ *   (Etherscan, copy, disconnect)
  */
 const ConnectButton = () => {
   const { address, isConnected, chainId } = useAccount();
@@ -20,6 +39,16 @@ const ConnectButton = () => {
   const { disconnect } = useDisconnect();
   const { switchChain, isPending: isSwitching } = useSwitchChain();
   const { data: ethBalance } = useBalance({ address, chainId: CHAIN.id });
+
+  // ENS lives on mainnet — resolve there even though the outlet stack runs
+  // on Sepolia (wagmi config already includes mainnet for the Uniswap lane).
+  const { data: ensName } = useEnsName({ address, chainId: mainnet.id });
+  const normalizedEnsName = ensName ? safeNormalize(ensName) : undefined;
+  const { data: ensAvatar } = useEnsAvatar({
+    name: normalizedEnsName,
+    chainId: mainnet.id,
+    query: { enabled: Boolean(normalizedEnsName) },
+  });
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -71,16 +100,32 @@ const ConnectButton = () => {
   return (
     <div ref={menuRef} style={{ position: 'relative' }}>
       <Button variant="ghost" size="sm" onClick={() => setMenuOpen((v) => !v)}>
-        <span
-          style={{
-            width: '8px',
-            height: '8px',
-            borderRadius: '50%',
-            background: 'var(--neon-green, #00ffa3)',
-            display: 'inline-block',
-          }}
-        />
-        <span style={{ fontFamily: 'var(--font-mono)' }}>{formatAddress(address)}</span>
+        {ensAvatar ? (
+          <img
+            src={ensAvatar}
+            alt={`${ensName} avatar`}
+            style={{
+              width: '18px',
+              height: '18px',
+              borderRadius: '50%',
+              display: 'inline-block',
+              objectFit: 'cover',
+            }}
+          />
+        ) : (
+          <span
+            style={{
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              background: 'var(--neon-green, #00ffa3)',
+              display: 'inline-block',
+            }}
+          />
+        )}
+        <span style={{ fontFamily: 'var(--font-mono)' }}>
+          {ensName || formatAddress(address)}
+        </span>
       </Button>
 
       {menuOpen && (
@@ -112,6 +157,17 @@ const ConnectButton = () => {
               borderBottom: '1px solid var(--border-glass)',
             }}
           >
+            {ensName && (
+              <div
+                style={{
+                  fontSize: '13px',
+                  color: 'var(--on-surface)',
+                  marginBottom: '4px',
+                }}
+              >
+                {ensName}
+              </div>
+            )}
             <div>{formatAddress(address, 10, 8)}</div>
             <div style={{ marginTop: '4px', color: 'var(--primary-container)' }}>
               {ethBalance
