@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
-import { useTheme } from '../../theme/ThemeContext';
 import ThemeToggle from '../ui/ThemeToggle';
+import ConnectButton from '../wallet/ConnectButton';
+import FaucetButton from '../wallet/FaucetButton';
+import KycBadge from '../wallet/KycBadge';
 
 /**
  * TopBar Component
@@ -9,13 +11,11 @@ import ThemeToggle from '../ui/ThemeToggle';
  * - Fixed top bar with glassmorphic background
  * - Logo with neon glow effect
  * - Theme toggle switch
- * - Connect Wallet button (stubbed for now)
+ * - Wallet auth (wagmi): connect, network guard, KYC status, faucet
  * - Responsive design
  */
 
 const TopBar = () => {
-  const { theme, toggleTheme } = useTheme();
-
   return (
     <header className="topbar">
       <div style={{
@@ -77,20 +77,17 @@ const TopBar = () => {
           alignItems: 'center',
           gap: 'var(--spacing-md)',
         }}>
+          {/* Compliance status */}
+          <KycBadge />
+
+          {/* Demo token faucet (also mints the KYC pass) */}
+          <FaucetButton />
+
           {/* Theme Toggle */}
           <ThemeToggle />
 
-          {/* Connect Wallet Button (stubbed) */}
-          <button
-            className="btn btn-ghost"
-            onClick={() => alert('Wallet connection coming soon!')}
-            style={{
-              padding: 'var(--spacing-xs) var(--spacing-md)',
-            }}
-          >
-            <span style={{ fontSize: '14px' }}>👛</span>
-            <span>Connect Wallet</span>
-          </button>
+          {/* Wallet auth */}
+          <ConnectButton />
 
           {/* Mobile menu button (hamburger is in Sidebar component) */}
         </div>

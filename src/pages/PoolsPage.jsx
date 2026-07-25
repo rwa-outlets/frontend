@@ -5,18 +5,15 @@ import GlassCard from '../components/ui/GlassCard';
 import Button from '../components/ui/Button';
 import Chip from '../components/ui/Chip';
 import StatusDot from '../components/ui/StatusDot';
-import { formatUSD, formatPercent, formatNumber } from '../utils/formatters';
-import { pools, poolTypes } from '../data/mockData';
+import { formatUSD, formatAddress } from '../utils/formatters';
+import { poolTypes, poolTypeName } from '../data/poolTypes';
+import { useLivePools } from '../hooks/useOutletData';
 import { useTheme } from '../theme/ThemeContext';
 import { tokens } from '../theme/tokens';
 
 /**
- * PoolsPage
- * 
- * Displays all available pools with filtering and sorting:
- * - Filter tabs (All / Express / Patient / Market)
- * - Pool cards grid
- * - "How Pools Work" expandable section
+ * PoolsPage — live pools read from the deployed contracts:
+ * CuratorVault strategies shipped on Aqua + pro-maker listings on OutletRouter.
  */
 
 const PoolsPage = () => {
@@ -25,63 +22,46 @@ const PoolsPage = () => {
   const [activeFilter, setActiveFilter] = useState('all');
   const [expandedPoolType, setExpandedPoolType] = useState(null);
 
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2,
-      },
-    },
-  };
+  const { data: pools = [], isLoading } = useLivePools();
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
       opacity: 1,
       y: 0,
-      transition: {
-        type: 'spring',
-        damping: 20,
-        stiffness: 150,
-        duration: 0.6,
-      },
+      transition: { type: 'spring', damping: 20, stiffness: 150, duration: 0.6 },
     },
   };
 
-  // Filter pools
-  const filteredPools = activeFilter === 'all' 
-    ? pools 
-    : pools.filter(pool => pool.type === activeFilter);
+  const filteredPools =
+    activeFilter === 'all' ? pools : pools.filter((pool) => pool.type === activeFilter);
 
-  // Filter tabs
   const filterTabs = [
     { id: 'all', label: 'All Pools', count: pools.length },
-    { id: 'express', label: 'Express', count: pools.filter(p => p.type === 'express').length },
-    { id: 'patient', label: 'Patient', count: pools.filter(p => p.type === 'patient').length },
-    { id: 'market', label: 'Market', count: pools.filter(p => p.type === 'market').length },
+    { id: 'express', label: 'Express', count: pools.filter((p) => p.type === 'express').length },
+    { id: 'patient', label: 'Patient', count: pools.filter((p) => p.type === 'patient').length },
+    { id: 'market', label: 'Market', count: pools.filter((p) => p.type === 'market').length },
   ];
 
-  // Pool type info for "How Pools Work" section
-  const poolTypeEntries = Object.entries(poolTypes);
+  const poolTypeEntries = Object.entries(poolTypes).filter(([id]) => id !== 'bid');
 
   return (
     <div className="page-content stagger-children">
       {/* Header */}
       <motion.div variants={itemVariants} style={{ marginBottom: 'var(--outlet-gap)' }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 'var(--spacing-lg)',
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 'var(--spacing-lg)',
+          }}
+        >
           <div>
             <h1 className="text-headline-lg">Pools</h1>
             <p className="text-body-md" style={{ color: 'var(--on-surface-variant)', marginTop: '4px' }}>
-              Trade RWAs with different risk/liquidity profiles
+              Live Aqua strategies on Sepolia — trade RWAs through the OutletRouter
             </p>
           </div>
           <Button variant="primary" size="md">
@@ -94,22 +74,22 @@ const PoolsPage = () => {
 
       {/* Filter Tabs */}
       <motion.div variants={itemVariants} style={{ marginBottom: 'var(--spacing-xl)' }}>
-        <div style={{
-          display: 'flex',
-          gap: 'var(--spacing-sm)',
-          flexWrap: 'wrap',
-          borderBottom: '1px solid var(--border-glass)',
-          paddingBottom: 'var(--spacing-md)',
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: 'var(--spacing-sm)',
+            flexWrap: 'wrap',
+            borderBottom: '1px solid var(--border-glass)',
+            paddingBottom: 'var(--spacing-md)',
+          }}
+        >
           {filterTabs.map((tab) => (
             <Button
               key={tab.id}
               variant={activeFilter === tab.id ? 'primary' : 'ghost'}
               size="sm"
               onClick={() => setActiveFilter(tab.id)}
-              style={{
-                padding: 'var(--spacing-xs) var(--spacing-md)',
-              }}
+              style={{ padding: 'var(--spacing-xs) var(--spacing-md)' }}
             >
               <span>{tab.label}</span>
               <Chip variant="default" value={tab.count} size="sm" />
@@ -119,196 +99,134 @@ const PoolsPage = () => {
       </motion.div>
 
       {/* Pool Cards Grid */}
-      <motion.div variants={itemVariants} className="pool-grid" style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-        gap: 'var(--spacing-lg)',
-        marginBottom: 'var(--outlet-gap)',
-      }}>
-        {filteredPools.map((pool, index) => (
-          <GlassCard 
-            key={pool.id} 
-            level={1} 
-            glow={index === 0}
-            onClick={() => {}}
-          >
-            <Link to={`/pools/${pool.id}`} style={{
-              color: 'inherit',
-              textDecoration: 'none',
-              display: 'block',
-            }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '16px',
-              }}>
-                {/* Pool Icon */}
-                <div style={{
-                  fontSize: '32px',
-                }}>
-                  {poolTypes[pool.type].icon}
-                </div>
-                
-                {/* Pool Info */}
-                <div style={{
-                  flex: 1,
-                }}>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: '8px',
-                  }}>
-                    <div>
-                      <h3 style={{
-                        fontFamily: 'var(--font-display)',
-                        fontSize: '18px',
-                        fontWeight: '700',
-                        color: 'var(--primary)',
-                        marginBottom: '4px',
-                      }}>
-                        {pool.name}
-                      </h3>
-                      <Chip variant="pool" value={pool.type} size="sm" />
-                    </div>
-                    <StatusDot status={pool.isActive ? 'active' : 'error'} />
-                  </div>
-                  
-                  <p style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '13px',
-                    color: 'var(--on-surface-variant)',
-                    marginBottom: '12px',
-                    lineHeight: '1.5',
-                  }}>
-                    {pool.description}
-                  </p>
-                  
-                  {/* Pool Stats */}
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(2, 1fr)',
-                    gap: '12px',
-                  }}>
-                    <div>
-                      <div style={{
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '11px',
-                        color: 'var(--on-surface-variant)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
-                      }}>
-                        TVL
-                      </div>
-                      <div style={{
-                        fontFamily: 'var(--font-display)',
-                        fontSize: '18px',
-                        fontWeight: '700',
-                        color: 'var(--primary)',
-                      }}>
-                        {formatUSD(pool.tvl)}
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '11px',
-                        color: 'var(--on-surface-variant)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
-                      }}>
-                        Volume (24h)
-                      </div>
-                      <div style={{
-                        fontFamily: 'var(--font-display)',
-                        fontSize: '18px',
-                        fontWeight: '700',
-                        color: 'var(--primary)',
-                      }}>
-                        {formatUSD(pool.volume24h)}
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '11px',
-                        color: 'var(--on-surface-variant)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
-                      }}>
-                        Spread
-                      </div>
-                      <div style={{
-                        fontFamily: 'var(--font-display)',
-                        fontSize: '18px',
-                        fontWeight: '700',
-                        color: 'var(--primary)',
-                      }}>
-                        {pool.type === 'market' 
-                          ? `${pool.fee} bps fee` 
-                          : pool.type === 'patient'
-                            ? `${pool.spreadFloor}-${pool.spreadInitial} bps`
-                            : `${pool.spreadMin}-${pool.spreadMax} bps`}
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '11px',
-                        color: 'var(--on-surface-variant)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
-                      }}>
-                        Utilization
-                      </div>
-                      <div style={{
-                        fontFamily: 'var(--font-display)',
-                        fontSize: '18px',
-                        fontWeight: '700',
-                        color: pool.utilization > 0.8 
-                          ? 'var(--neon-gold)' 
-                          : pool.utilization > 0.5 
-                            ? 'var(--primary-container)' 
-                            : 'var(--on-surface)',
-                      }}>
-                        {formatPercent(pool.utilization)}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Progress bar for utilization */}
-                  <div style={{
-                    marginTop: '12px',
-                    height: '4px',
-                    background: 'var(--surface-container-low)',
-                    borderRadius: 'var(--rounded-full)',
-                    overflow: 'hidden',
-                  }}>
-                    <motion.div
-                      style={{
-                        height: '100%',
-                        background: 'linear-gradient(90deg, var(--primary-container), var(--neon-cyan))',
-                        borderRadius: 'var(--rounded-full)',
-                        width: `${pool.utilization * 100}%`,
-                      }}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${pool.utilization * 100}%` }}
-                      transition={{ delay: 0.5 + index * 0.1, duration: 1 }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </Link>
+      <motion.div variants={itemVariants} style={{ marginBottom: 'var(--outlet-gap)' }}>
+        {isLoading ? (
+          <GlassCard level={1} glow={false}>
+            <div style={{ padding: 'var(--spacing-xl)', textAlign: 'center' }}>
+              <p className="text-body-md" style={{ color: 'var(--on-surface-variant)' }}>
+                Reading pools from Sepolia…
+              </p>
+            </div>
           </GlassCard>
-        ))}
+        ) : filteredPools.length === 0 ? (
+          <GlassCard level={1} glow={false}>
+            <div style={{ padding: 'var(--spacing-xl)', textAlign: 'center' }}>
+              <div style={{ fontSize: '48px', marginBottom: 'var(--spacing-md)', opacity: 0.5 }}>🌊</div>
+              <h3 className="text-headline-lg" style={{ fontSize: '20px', marginBottom: 'var(--spacing-sm)' }}>
+                No Pools Shipped Yet
+              </h3>
+              <p className="text-body-md" style={{ color: 'var(--on-surface-variant)', maxWidth: '520px', margin: '0 auto' }}>
+                Pools appear here as soon as the curator agent ships strategies from the
+                CuratorVaults to Aqua (or a pro maker lists a resting bid on the router).
+                Deposit USDC to the vault to fund the first pools.
+              </p>
+              <Button variant="primary" size="md" style={{ marginTop: 'var(--spacing-lg)' }}>
+                <Link to="/vault" style={{ color: 'inherit', textDecoration: 'none' }}>
+                  Deposit to Vault
+                </Link>
+              </Button>
+            </div>
+          </GlassCard>
+        ) : (
+          <div
+            className="pool-grid"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
+              gap: 'var(--spacing-lg)',
+            }}
+          >
+            {filteredPools.map((pool, index) => {
+              const typeInfo = poolTypes[pool.type] ?? poolTypes.express;
+              return (
+                <GlassCard key={pool.id} level={1} glow={index === 0}>
+                  <Link
+                    to={`/pools/${pool.hash}`}
+                    style={{ color: 'inherit', textDecoration: 'none', display: 'block' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+                      <div style={{ fontSize: '32px' }}>{typeInfo.icon}</div>
+
+                      <div style={{ flex: 1 }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            marginBottom: '8px',
+                          }}
+                        >
+                          <div>
+                            <h3
+                              style={{
+                                fontFamily: 'var(--font-display)',
+                                fontSize: '18px',
+                                fontWeight: '700',
+                                color: 'var(--primary)',
+                                marginBottom: '4px',
+                              }}
+                            >
+                              {poolTypeName(pool.type, pool.asset.symbol)}
+                            </h3>
+                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                              <Chip variant="pool" value={pool.type} size="sm" />
+                              <Chip variant="asset" value={pool.asset.symbol} size="sm" />
+                            </div>
+                          </div>
+                          <StatusDot status={pool.active && pool.listed ? 'active' : 'error'} />
+                        </div>
+
+                        <p
+                          style={{
+                            fontFamily: 'var(--font-body)',
+                            fontSize: '13px',
+                            color: 'var(--on-surface-variant)',
+                            marginBottom: '12px',
+                            lineHeight: '1.5',
+                          }}
+                        >
+                          {typeInfo.description}
+                        </p>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+                          <PoolStat label="Shipped TVL" value={formatUSD(pool.tvl)} />
+                          <PoolStat label="NAV" value={formatUSD(pool.nav, 4)} />
+                          <PoolStat
+                            label="USDC side"
+                            value={formatUSD(pool.usdc)}
+                          />
+                          <PoolStat
+                            label={`${pool.asset.symbol} side`}
+                            value={pool.rwa.toLocaleString('en-US', { maximumFractionDigits: 2 })}
+                          />
+                        </div>
+
+                        <div
+                          style={{
+                            marginTop: '12px',
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: '11px',
+                            color: 'var(--on-surface-variant)',
+                          }}
+                        >
+                          maker: {pool.vaultId ? pool.vaultName : formatAddress(pool.maker || pool.hash)}
+                          {' · '}
+                          {formatAddress(pool.hash, 10, 6)}
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                </GlassCard>
+              );
+            })}
+          </div>
+        )}
       </motion.div>
 
       {/* How Pools Work Section */}
       <motion.div variants={itemVariants}>
         <GlassCard level={1} glow={false}>
-          <div style={{
-            padding: 'var(--spacing-lg)',
-          }}>
+          <div style={{ padding: 'var(--spacing-lg)' }}>
             <button
               onClick={() => setExpandedPoolType(expandedPoolType ? null : poolTypeEntries[0][0])}
               style={{
@@ -323,15 +241,10 @@ const PoolsPage = () => {
                 marginBottom: expandedPoolType ? 'var(--spacing-lg)' : 0,
               }}
             >
-              <h2 className="text-headline-lg" style={{
-                fontSize: '24px',
-              }}>
+              <h2 className="text-headline-lg" style={{ fontSize: '24px' }}>
                 How Pools Work
               </h2>
-              <span style={{
-                fontSize: '20px',
-                color: 'var(--primary-container)',
-              }}>
+              <span style={{ fontSize: '20px', color: 'var(--primary-container)' }}>
                 {expandedPoolType ? '−' : '+'}
               </span>
             </button>
@@ -343,80 +256,49 @@ const PoolsPage = () => {
                 transition={{ duration: 0.3 }}
               >
                 <GlassCard level={2} glow={false} padding="var(--spacing-lg)">
-                  <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 'var(--spacing-lg)',
-                  }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
                     {poolTypeEntries.map(([typeId, typeInfo]) => (
-                      <div key={typeId} style={{
-                        padding: 'var(--spacing-md)',
-                        border: `1px solid ${currentTokens.borderGlass}`,
-                        borderRadius: 'var(--rounded-md)',
-                      }}>
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: '12px',
-                        }}>
+                      <div
+                        key={typeId}
+                        style={{
+                          padding: 'var(--spacing-md)',
+                          border: `1px solid ${currentTokens.borderGlass}`,
+                          borderRadius: 'var(--rounded-md)',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
                           <span style={{ fontSize: '24px' }}>{typeInfo.icon}</span>
                           <div>
-                            <h3 style={{
-                              fontFamily: 'var(--font-display)',
-                              fontSize: '16px',
-                              fontWeight: '700',
-                              color: 'var(--primary)',
-                              marginBottom: '4px',
-                            }}>
+                            <h3
+                              style={{
+                                fontFamily: 'var(--font-display)',
+                                fontSize: '16px',
+                                fontWeight: '700',
+                                color: 'var(--primary)',
+                                marginBottom: '4px',
+                              }}
+                            >
                               {typeInfo.name}
                             </h3>
                             <Chip variant="pool" value={typeInfo.riskLevel} size="sm" />
                           </div>
                         </div>
-                        <p style={{
-                          fontFamily: 'var(--font-body)',
-                          fontSize: '13px',
-                          color: 'var(--on-surface-variant)',
-                          marginTop: '8px',
-                          lineHeight: '1.6',
-                        }}>
+                        <p
+                          style={{
+                            fontFamily: 'var(--font-body)',
+                            fontSize: '13px',
+                            color: 'var(--on-surface-variant)',
+                            marginTop: '8px',
+                            lineHeight: '1.6',
+                          }}
+                        >
                           {typeInfo.description}
                         </p>
-                        <ul style={{
-                          marginTop: '8px',
-                          paddingLeft: '20px',
-                        }}>
-                          <li style={{
-                            fontFamily: 'var(--font-body)',
-                            fontSize: '13px',
-                            color: 'var(--on-surface-variant)',
-                            marginBottom: '4px',
-                          }}>
-                            <strong style={{ color: 'var(--primary)' }}>Settlement:</strong> {typeInfo.settlementTime}
-                          </li>
-                          <li style={{
-                            fontFamily: 'var(--font-body)',
-                            fontSize: '13px',
-                            color: 'var(--on-surface-variant)',
-                            marginBottom: '4px',
-                          }}>
-                            <strong style={{ color: 'var(--primary)' }}>Spread:</strong> {typeInfo.typicalSpread}
-                          </li>
-                          <li style={{
-                            fontFamily: 'var(--font-body)',
-                            fontSize: '13px',
-                            color: 'var(--on-surface-variant)',
-                            marginBottom: '4px',
-                          }}>
-                            <strong style={{ color: 'var(--primary)' }}>Yield Source:</strong> {typeInfo.yieldSource}
-                          </li>
-                          <li style={{
-                            fontFamily: 'var(--font-body)',
-                            fontSize: '13px',
-                            color: 'var(--on-surface-variant)',
-                          }}>
-                            <strong style={{ color: 'var(--primary)' }}>Suitable For:</strong> {typeInfo.suitableFor}
-                          </li>
+                        <ul style={{ marginTop: '8px', paddingLeft: '20px' }}>
+                          <ListRow label="Settlement" value={typeInfo.settlementTime} />
+                          <ListRow label="Spread" value={typeInfo.typicalSpread} />
+                          <ListRow label="Yield Source" value={typeInfo.yieldSource} />
+                          <ListRow label="Suitable For" value={typeInfo.suitableFor} last />
                         </ul>
                       </div>
                     ))}
@@ -430,5 +312,44 @@ const PoolsPage = () => {
     </div>
   );
 };
+
+const PoolStat = ({ label, value }) => (
+  <div>
+    <div
+      style={{
+        fontFamily: 'var(--font-mono)',
+        fontSize: '11px',
+        color: 'var(--on-surface-variant)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.08em',
+      }}
+    >
+      {label}
+    </div>
+    <div
+      style={{
+        fontFamily: 'var(--font-display)',
+        fontSize: '18px',
+        fontWeight: '700',
+        color: 'var(--primary)',
+      }}
+    >
+      {value}
+    </div>
+  </div>
+);
+
+const ListRow = ({ label, value, last = false }) => (
+  <li
+    style={{
+      fontFamily: 'var(--font-body)',
+      fontSize: '13px',
+      color: 'var(--on-surface-variant)',
+      marginBottom: last ? 0 : '4px',
+    }}
+  >
+    <strong style={{ color: 'var(--primary)' }}>{label}:</strong> {value}
+  </li>
+);
 
 export default PoolsPage;

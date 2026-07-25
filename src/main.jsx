@@ -2,6 +2,9 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
+import { WagmiProvider } from 'wagmi';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { wagmiConfig } from './lib/wagmi';
 import { ThemeProvider } from './theme/ThemeContext';
 import App from './App';
 import HomePage from './pages/HomePage';
@@ -51,13 +54,26 @@ const AnimatedRoutes = () => {
   );
 };
 
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
+
 const Root = () => {
   return (
-    <ThemeProvider>
-      <BrowserRouter>
-        <AnimatedRoutes />
-      </BrowserRouter>
-    </ThemeProvider>
+    <WagmiProvider config={wagmiConfig}>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <BrowserRouter>
+            <AnimatedRoutes />
+          </BrowserRouter>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   );
 };
 
