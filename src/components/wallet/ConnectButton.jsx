@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAccount, useConnect, useDisconnect, useSwitchChain, useBalance } from 'wagmi';
+import { formatUnits } from 'viem';
 import Button from '../ui/Button';
 import { CHAIN } from '../../lib/wagmi';
 import { EXPLORER_URL } from '../../lib/contracts';
@@ -114,7 +115,7 @@ const ConnectButton = () => {
             <div>{formatAddress(address, 10, 8)}</div>
             <div style={{ marginTop: '4px', color: 'var(--primary-container)' }}>
               {ethBalance
-                ? `${Number(ethBalance.formatted).toFixed(4)} ${ethBalance.symbol}`
+                ? `${Number(formatUnits(ethBalance.value, ethBalance.decimals)).toFixed(4)} ${ethBalance.symbol}`
                 : '…'}{' '}
               · Sepolia
             </div>
