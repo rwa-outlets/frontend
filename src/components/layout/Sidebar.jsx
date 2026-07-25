@@ -23,17 +23,26 @@ const navItems = [
   { path: '/assistant', label: 'AI Assistant', icon: '✦' },
 ];
 
+const isMobileViewport = () =>
+  typeof window !== 'undefined' && window.innerWidth < 992;
+
 const Sidebar = () => {
   const location = useLocation();
   const { isDark } = useTheme();
-  const [isMobile, setIsMobile] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  // Start collapsed on small screens — the hamburger opens it on demand.
+  const [isMobile, setIsMobile] = useState(isMobileViewport);
+  const [isCollapsed, setIsCollapsed] = useState(isMobileViewport);
 
   useEffect(() => {
+    let wasMobile = isMobileViewport();
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 992);
-      if (window.innerWidth >= 992) {
-        setIsCollapsed(false);
+      const mobile = isMobileViewport();
+      setIsMobile(mobile);
+      // Only toggle when crossing the breakpoint — mobile browsers fire
+      // resize on URL-bar show/hide and must not slam the menu shut.
+      if (mobile !== wasMobile) {
+        wasMobile = mobile;
+        setIsCollapsed(mobile);
       }
     };
 

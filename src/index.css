@@ -1525,3 +1525,71 @@ html {
 .stagger-children > *:nth-child(6) { animation-delay: 0.3s; }
 .stagger-children > *:nth-child(7) { animation-delay: 0.35s; }
 .stagger-children > *:nth-child(8) { animation-delay: 0.4s; }
+
+/* ===========================================================================
+   RESPONSIVE POLISH — topbar, assistant page, small-screen safety
+   =========================================================================== */
+
+/* Assistant page fills the viewport below the topbar; dvh tracks mobile
+   browser chrome (URL bar) correctly where vh does not. */
+.assistant-page {
+  height: calc(100dvh - var(--topbar-height) - 90px);
+  min-height: 320px;
+}
+
+@media (max-width: 992px) {
+  /* The hamburger is fixed at the top-left — give the topbar content room. */
+  .topbar-inner {
+    padding: 0 var(--spacing-md) 0 64px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .topbar-right {
+    gap: var(--spacing-xs) !important;
+  }
+
+  .assistant-page {
+    height: calc(100dvh - var(--topbar-height) - 56px);
+  }
+
+  /* Suggestion cards stack full-width */
+  .assistant-page .GlassCard {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  /* KYC state also lives on the Portfolio page — drop it from the cramped bar */
+  .topbar-kyc {
+    display: none;
+  }
+}
+
+/* Keep wide inline-styled rows from forcing horizontal scroll anywhere */
+.page-content > * {
+  max-width: 100%;
+}
+
+/* Flex/grid items default to min-width auto, which lets a wide child (e.g. a
+   DataTable) propagate its min-content width up and stretch the whole page
+   past the viewport. Zero it so scroll containers actually scroll. */
+.main-wrapper,
+.main-content,
+.page-content {
+  min-width: 0;
+}
+
+.stats-grid > *,
+.nav-grid > *,
+.pool-grid > *,
+.pool-summary-grid > *,
+.yield-grid > *,
+.pool-detail-grid > * {
+  min-width: 0;
+}
+
+/* Scroll containers for tables need a bounded width to kick in */
+.data-table-container {
+  max-width: 100%;
+}

@@ -19,6 +19,7 @@ const TopBar = () => {
 	return (
 		<header className="topbar">
 			<div
+				className="topbar-inner"
 				style={{
 					display: "flex",
 					alignItems: "center",
@@ -76,8 +77,10 @@ const TopBar = () => {
 						alignItems: "center",
 						gap: "var(--spacing-md)",
 					}}>
-					{/* Compliance status */}
-					<KycBadge />
+					{/* Compliance status (hidden on very small screens) */}
+					<span className="topbar-kyc">
+						<KycBadge />
+					</span>
 
 					{/* Demo token faucet (also mints the KYC pass) */}
 					<FaucetButton />

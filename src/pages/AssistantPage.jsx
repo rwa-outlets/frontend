@@ -136,10 +136,9 @@ const AssistantPage = () => {
   const isEmpty = messages.length === 0;
 
   return (
-    <div style={{
+    <div className="assistant-page" style={{
       display: 'flex',
       flexDirection: 'column',
-      height: 'calc(100vh - 140px)',
       maxWidth: '860px',
       margin: '0 auto',
       width: '100%',
@@ -204,7 +203,7 @@ const AssistantPage = () => {
                   glow={false}
                   onClick={() => sendPrompt(s.prompt)}
                   style={{
-                    width: '240px',
+                    width: 'min(240px, 100%)',
                     padding: 'var(--spacing-md)',
                     cursor: 'pointer',
                     display: 'flex',
