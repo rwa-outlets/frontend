@@ -17,7 +17,7 @@ const navItems = [
   { path: '/redeem', label: 'Redeem', icon: '🔁' },
   { path: '/dashboard', label: 'Dashboard', icon: '📊' },
   { path: '/pools', label: 'Pools', icon: '🏊' },
-  { path: '/queue', label: 'Redemption Queue', icon: '🚀' },
+  { path: '/queue', label: 'Delayed Redemptions', icon: '🕐' },
   { path: '/vault', label: 'Vault', icon: '🔒' },
 ];
 

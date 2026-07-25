@@ -42,9 +42,15 @@ const QueuePage = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [requestAmount, setRequestAmount] = useState('');
   const [activeTab, setActiveTab] = useState('my-requests');
+  const [claimingAsset, setClaimingAsset] = useState(null);
 
   const asset = RWA_ASSETS[selectedAsset];
-  const { data: queue, isLoading } = useQueueData(selectedAsset);
+  // Both queues at once — "My Requests" aggregates every delayed redemption item
+  const queueByAsset = {
+    rwaTBILL: useQueueData('rwaTBILL'),
+    rwaCREDIT: useQueueData('rwaCREDIT'),
+  };
+  const { data: queue } = queueByAsset[selectedAsset];
   const { navs } = useNavs();
   const { balances } = useTokenBalances();
   // Product rule: instant pool exits are open to everyone; the delayed
@@ -59,8 +65,17 @@ const QueuePage = () => {
   const amountNum = Number(requestAmount);
   const validAmount = Number.isFinite(amountNum) && amountNum > 0 && amountNum <= balance;
 
-  const userRequests = queue?.user?.requests ?? [];
-  const claimableShares = queue?.user?.claimableShares ?? 0;
+  // Every delayed redemption item across both queues, claimables first
+  const allRequests = RWA_LIST.flatMap((a) => {
+    const q = queueByAsset[a.id].data;
+    return (q?.user?.requests ?? []).map((r) => ({ ...r, asset: a }));
+  }).sort(
+    (x, y) =>
+      (x.status === 'Claimable' ? 0 : 1) - (y.status === 'Claimable' ? 0 : 1) ||
+      (y.settledAt || y.submittedAt) - (x.settledAt || x.submittedAt) ||
+      y.epoch - x.epoch,
+  );
+  const requestsLoading = queueByAsset.rwaTBILL.isLoading || queueByAsset.rwaCREDIT.isLoading;
 
   const submitRequest = async () => {
     if (!validAmount || !address || !hasKyc) return;
@@ -92,20 +107,22 @@ const QueuePage = () => {
     }
   };
 
-  const claimAll = async () => {
-    if (!queue?.user?.claimableSharesRaw || !address) return;
+  const claimAll = async (claimAsset, claimQueue) => {
+    if (!claimQueue?.user?.claimableSharesRaw || !address) return;
+    setClaimingAsset(claimAsset.id);
     const ok = await claimFlow.run(async ({ writeAndWait }) => {
-      await writeAndWait('Claiming settled USDC…', {
-        address: asset.queue,
+      await writeAndWait(`Claiming settled USDC from the ${claimAsset.symbol} queue…`, {
+        address: claimAsset.queue,
         abi: redemptionQueueAbi,
         functionName: 'redeem',
-        args: [queue.user.claimableSharesRaw, address, address],
+        args: [claimQueue.user.claimableSharesRaw, address, address],
       });
     });
     if (ok) queryClient.invalidateQueries();
   };
 
   const requestColumns = [
+    { key: 'asset', header: 'Asset', sortable: false },
     { key: 'epoch', header: 'Epoch', sortable: false },
     { key: 'amount', header: 'Amount', sortable: false, align: 'right' },
     { key: 'status', header: 'Status', sortable: false },
@@ -203,66 +220,76 @@ const QueuePage = () => {
         </div>
       </motion.div>
 
-      {/* Claimable banner */}
-      {claimableShares > 0 && (
-        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-          <GlassCard level={1} glow={true}>
-            <div
-              style={{
-                padding: 'var(--spacing-lg)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: 'var(--spacing-md)',
-              }}
-            >
-              <div>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '18px',
-                    fontWeight: '700',
-                    color: 'var(--primary)',
-                  }}
-                >
-                  Settlement ready to claim
-                </div>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '12px',
-                    color: 'var(--on-surface-variant)',
-                    marginTop: '4px',
-                  }}
-                >
-                  {claimableShares.toLocaleString('en-US', { maximumFractionDigits: 4 })} {asset.symbol}{' '}
-                  settled — pays NAV at settlement minus {queue?.queueFeeBps ?? 5} bps queue fee
-                </div>
-              </div>
-              <Button
-                variant="primary"
-                size="md"
-                loading={claimFlow.status === 'pending'}
-                onClick={claimAll}
+      {/* Claimable banners — one per queue with settled shares */}
+      {RWA_LIST.map((a) => {
+        const q = queueByAsset[a.id].data;
+        const claimable = q?.user?.claimableShares ?? 0;
+        if (claimable <= 0) return null;
+        return (
+          <motion.div
+            key={`claim-${a.id}`}
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+            style={{ marginBottom: 'var(--spacing-md)' }}
+          >
+            <GlassCard level={1} glow={true}>
+              <div
+                style={{
+                  padding: 'var(--spacing-lg)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: 'var(--spacing-md)',
+                }}
               >
-                Claim USDC
-              </Button>
-            </div>
-            {claimFlow.status !== 'idle' && (
-              <div style={{ padding: '0 var(--spacing-lg) var(--spacing-lg)' }}>
-                <TxStatus
-                  status={claimFlow.status}
-                  step={claimFlow.step}
-                  errorMessage={claimFlow.errorMessage}
-                  txHash={claimFlow.txHash}
-                  successLabel="Claimed"
-                />
+                <div>
+                  <div
+                    style={{
+                      fontFamily: 'var(--font-display)',
+                      fontSize: '18px',
+                      fontWeight: '700',
+                      color: 'var(--primary)',
+                    }}
+                  >
+                    {a.logo} {a.symbol} settlement ready to claim
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '12px',
+                      color: 'var(--on-surface-variant)',
+                      marginTop: '4px',
+                    }}
+                  >
+                    {claimable.toLocaleString('en-US', { maximumFractionDigits: 4 })} {a.symbol}{' '}
+                    settled — pays NAV at settlement minus {q?.queueFeeBps ?? 5} bps queue fee
+                  </div>
+                </div>
+                <Button
+                  variant="primary"
+                  size="md"
+                  loading={claimFlow.status === 'pending' && claimingAsset === a.id}
+                  disabled={claimFlow.status === 'pending'}
+                  onClick={() => claimAll(a, q)}
+                >
+                  Claim USDC
+                </Button>
               </div>
-            )}
-          </GlassCard>
-        </motion.div>
-      )}
+              {claimFlow.status !== 'idle' && claimingAsset === a.id && (
+                <div style={{ padding: '0 var(--spacing-lg) var(--spacing-lg)' }}>
+                  <TxStatus
+                    status={claimFlow.status}
+                    step={claimFlow.step}
+                    errorMessage={claimFlow.errorMessage}
+                    txHash={claimFlow.txHash}
+                    successLabel="Claimed"
+                  />
+                </div>
+              )}
+            </GlassCard>
+          </motion.div>
+        );
+      })}
 
       {/* Tabs */}
       <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
@@ -280,7 +307,7 @@ const QueuePage = () => {
             size="sm"
             onClick={() => setActiveTab('my-requests')}
           >
-            My Requests ({userRequests.length})
+            All My Redemptions ({allRequests.length})
           </Button>
           <Button
             variant={activeTab === 'epochs' ? 'primary' : 'ghost'}
@@ -309,9 +336,9 @@ const QueuePage = () => {
                 title="Connect Your Wallet"
                 body="Connect a wallet to see and create redemption requests."
               />
-            ) : isLoading ? (
+            ) : requestsLoading ? (
               <EmptyState icon="⏳" title="Loading" body="Reading queue state from Sepolia…" />
-            ) : userRequests.length === 0 ? (
+            ) : allRequests.length === 0 ? (
               <EmptyState
                 icon="📄"
                 title="No Requests Yet"
@@ -326,8 +353,13 @@ const QueuePage = () => {
               <GlassCard level={1} glow={false} padding="0">
                 <DataTable
                   columns={requestColumns}
-                  data={userRequests.map((request) => ({
-                    id: `epoch-${request.epoch}`,
+                  data={allRequests.map((request) => ({
+                    id: `${request.asset.id}-epoch-${request.epoch}`,
+                    asset: (
+                      <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 600 }}>
+                        {request.asset.logo} {request.asset.symbol}
+                      </span>
+                    ),
                     epoch: (
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: '13px' }}>
                         #{request.epoch}
@@ -337,7 +369,7 @@ const QueuePage = () => {
                       <div style={{ textAlign: 'right' }}>
                         <div style={{ fontFamily: 'var(--font-mono)', fontSize: '13px' }}>
                           {request.shares.toLocaleString('en-US', { maximumFractionDigits: 4 })}{' '}
-                          {asset.symbol}
+                          {request.asset.symbol}
                         </div>
                         <div
                           style={{
@@ -346,7 +378,10 @@ const QueuePage = () => {
                             color: 'var(--on-surface-variant)',
                           }}
                         >
-                          ≈ {formatUSD(request.shares * (request.navAtSettle || nav))}
+                          ≈ {formatUSD(
+                            request.shares *
+                              (request.navAtSettle || (navs[request.asset.id]?.nav ?? 0)),
+                          )}
                         </div>
                       </div>
                     ),
@@ -374,7 +409,7 @@ const QueuePage = () => {
                           : `epoch #${request.epoch} open`,
                     payout: request.estPayout
                       ? formatUSD(request.estPayout)
-                      : `≈ ${formatUSD(request.shares * nav)} at NAV`,
+                      : `≈ ${formatUSD(request.shares * (navs[request.asset.id]?.nav ?? 0))} at NAV`,
                   }))}
                 />
               </GlassCard>

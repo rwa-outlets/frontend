@@ -300,10 +300,131 @@ const RedeemPage = () => {
             />
           </div>
         )}
+
+        {/* All balances at a glance — tap an RWA to load it into the widget */}
+        <div style={{ ...boxStyle, marginTop: 'var(--spacing-lg)' }}>
+          <div style={boxHeaderStyle}>
+            <span>Your balances</span>
+            {isConnected && (
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px' }}>
+                ≈ {formatUSD(
+                  (balances.USDC?.value ?? 0) +
+                    RWA_LIST.reduce(
+                      (sum, a) =>
+                        sum + (balances[a.id]?.value ?? 0) * (navs[a.id]?.nav ?? 0),
+                      0,
+                    ),
+                )}
+              </span>
+            )}
+          </div>
+          {!isConnected ? (
+            <div
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '12px',
+                color: 'var(--on-surface-variant)',
+                padding: '6px 0',
+              }}
+            >
+              Connect a wallet to see balances.
+            </div>
+          ) : (
+            <>
+              <BalanceRow
+                logo="💵"
+                symbol="USDC"
+                value={balances.USDC?.value ?? 0}
+                usd={balances.USDC?.value ?? 0}
+                hint="settlement cash"
+              />
+              {RWA_LIST.map((a) => (
+                <BalanceRow
+                  key={a.id}
+                  logo={a.logo}
+                  symbol={a.symbol}
+                  value={balances[a.id]?.value ?? 0}
+                  usd={(balances[a.id]?.value ?? 0) * (navs[a.id]?.nav ?? 0)}
+                  hint={`NAV ${navs[a.id]?.nav ? formatUSD(navs[a.id].nav, 4) : '—'}`}
+                  active={assetId === a.id}
+                  onClick={() => setAssetId(a.id)}
+                />
+              ))}
+            </>
+          )}
+        </div>
       </motion.div>
     </div>
   );
 };
+
+const BalanceRow = ({ logo, symbol, value, usd, hint, active, onClick }) => (
+  <button
+    onClick={onClick}
+    disabled={!onClick}
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 'var(--spacing-md)',
+      width: '100%',
+      padding: '8px 10px',
+      borderRadius: 'var(--rounded-default)',
+      border: `1px solid ${active ? 'var(--primary-container)' : 'transparent'}`,
+      background: active ? 'rgba(0, 255, 163, 0.06)' : 'transparent',
+      cursor: onClick ? 'pointer' : 'default',
+      transition: 'all var(--transition-fast)',
+      textAlign: 'left',
+    }}
+  >
+    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <span style={{ fontSize: '18px' }}>{logo}</span>
+      <span>
+        <span
+          style={{
+            display: 'block',
+            fontFamily: 'var(--font-body)',
+            fontSize: '13px',
+            fontWeight: '600',
+            color: 'var(--on-surface)',
+          }}
+        >
+          {symbol}
+        </span>
+        <span
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '10px',
+            color: 'var(--on-surface-variant)',
+          }}
+        >
+          {hint}
+        </span>
+      </span>
+    </span>
+    <span style={{ textAlign: 'right' }}>
+      <span
+        style={{
+          display: 'block',
+          fontFamily: 'var(--font-mono)',
+          fontSize: '13px',
+          color: 'var(--on-surface)',
+        }}
+      >
+        {value.toLocaleString('en-US', { maximumFractionDigits: 4 })}
+      </span>
+      <span
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '10px',
+          color: 'var(--on-surface-variant)',
+        }}
+      >
+        ≈ {formatUSD(usd)}
+      </span>
+    </span>
+  </button>
+);
 
 const LaneTile = ({ selected, onClick, icon, title, amount, sub, badge, locked }) => (
   <button
