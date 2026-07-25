@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { useAccount } from 'wagmi';
+import { useQueryClient } from '@tanstack/react-query';
+import { parseUnits } from 'viem';
 import GlassCard from '../components/ui/GlassCard';
 import Button from '../components/ui/Button';
 import Chip from '../components/ui/Chip';
@@ -8,120 +10,249 @@ import StatusDot from '../components/ui/StatusDot';
 import InputField from '../components/ui/InputField';
 import DataTable from '../components/ui/DataTable';
 import Modal from '../components/ui/Modal';
-import { formatUSD, formatPercent, formatTokenAmount, formatTimeAgo, formatDate } from '../utils/formatters';
-import { queueRequests, assets, pools } from '../data/mockData';
-import { useTheme } from '../theme/ThemeContext';
-import { tokens, statusColors } from '../theme/tokens';
+import TxStatus from '../components/wallet/TxStatus';
+import { formatUSD, formatTimeAgo } from '../utils/formatters';
+import { RWA_ASSETS, RWA_LIST, EXPLORER_URL } from '../lib/contracts';
+import { redemptionQueueAbi } from '../lib/abis';
+import { useQueueData, useNavs, useTokenBalances } from '../hooks/useOutletData';
+import { useTxFlow } from '../hooks/useTxFlow';
+import { statusColors } from '../theme/tokens';
 
 /**
- * QueuePage
- * 
- * Redemption Queue interface with:
- * - Create Request section
- * - My Requests table
- * - Queue Stats
+ * QueuePage — the ERC-7540 RedemptionQueue per asset.
+ *
+ * Patient exit: escrow RWA into the current issuer batch epoch
+ * (requestRedeem), wait for the curator to submit + the issuer to settle at
+ * NAV, then claim USDC (redeem — standard 4626 claim leg, FIFO epochs).
  */
 
 const QueuePage = () => {
-  const { isDark } = useTheme();
-  const currentTokens = isDark ? tokens.dark : tokens.light;
-  
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const { address, isConnected } = useAccount();
+  const queryClient = useQueryClient();
+
   const [selectedAsset, setSelectedAsset] = useState('rwaTBILL');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [requestAmount, setRequestAmount] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('my-requests');
 
-  // User's requests (filter by mock user address)
-  const userAddress = '0xCurrentUser11111111111111111111111111';
-  const userRequests = queueRequests.filter(r => r.user === userAddress);
-  const allRequests = queueRequests;
+  const asset = RWA_ASSETS[selectedAsset];
+  const { data: queue, isLoading } = useQueueData(selectedAsset);
+  const { navs } = useNavs();
+  const { balances } = useTokenBalances();
+  const requestFlow = useTxFlow();
+  const claimFlow = useTxFlow();
 
-  // Queue stats
-  const queueStats = {
-    totalBacklog: queueRequests.filter(r => r.status === 'Pending').length,
-    averageSettlementTime: '~45 days',
-    nextEpoch: 12346,
-    nextEpochTime: '2026-07-26T14:00:00Z',
-    totalValue: queueRequests.reduce((sum, r) => sum + r.amountUSDC, 0),
+  const nav = navs[selectedAsset]?.nav ?? 0;
+  const balance = balances[selectedAsset]?.value ?? 0;
+  const amountNum = Number(requestAmount);
+  const validAmount = Number.isFinite(amountNum) && amountNum > 0 && amountNum <= balance;
+
+  const userRequests = queue?.user?.requests ?? [];
+  const claimableShares = queue?.user?.claimableShares ?? 0;
+
+  const submitRequest = async () => {
+    if (!validAmount || !address) return;
+    const sharesRaw = parseUnits(String(requestAmount), asset.decimals);
+
+    const ok = await requestFlow.run(async ({ writeAndWait, ensureAllowance }) => {
+      await ensureAllowance({
+        token: asset.address,
+        owner: address,
+        spender: asset.queue,
+        amount: sharesRaw,
+        symbol: asset.symbol,
+      });
+      await writeAndWait(`Queueing ${asset.symbol} for NAV settlement…`, {
+        address: asset.queue,
+        abi: redemptionQueueAbi,
+        functionName: 'requestRedeem',
+        args: [sharesRaw, address, address],
+      });
+    });
+
+    if (ok) {
+      setRequestAmount('');
+      queryClient.invalidateQueries();
+      setTimeout(() => {
+        setIsCreateModalOpen(false);
+        requestFlow.reset();
+      }, 2000);
+    }
   };
 
-  // Asset options for create request
-  const assetOptions = Object.values(assets).filter(a => a.type === 'rwa');
+  const claimAll = async () => {
+    if (!queue?.user?.claimableSharesRaw || !address) return;
+    const ok = await claimFlow.run(async ({ writeAndWait }) => {
+      await writeAndWait('Claiming settled USDC…', {
+        address: asset.queue,
+        abi: redemptionQueueAbi,
+        functionName: 'redeem',
+        args: [queue.user.claimableSharesRaw, address, address],
+      });
+    });
+    if (ok) queryClient.invalidateQueries();
+  };
 
-  // Request table columns
   const requestColumns = [
-    { key: 'asset', header: 'Asset', sortable: true },
-    { key: 'amount', header: 'Amount', sortable: true, align: 'right' },
-    { key: 'status', header: 'Status', sortable: true },
-    { key: 'submitted', header: 'Submitted', sortable: true, align: 'right' },
-    { key: 'settlement', header: 'Settlement', sortable: true, align: 'right' },
-    { key: 'actions', header: 'Actions', sortable: false },
+    { key: 'epoch', header: 'Epoch', sortable: false },
+    { key: 'amount', header: 'Amount', sortable: false, align: 'right' },
+    { key: 'status', header: 'Status', sortable: false },
+    { key: 'settlement', header: 'Settlement', sortable: false, align: 'right' },
+    { key: 'payout', header: 'Payout (est.)', sortable: false, align: 'right' },
   ];
 
-  // Create new request
-  const handleCreateRequest = async () => {
-    if (!selectedAsset || !requestAmount || isNaN(requestAmount) || Number(requestAmount) <= 0) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    
-    // Simulate submission
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    setIsSubmitting(false);
-    setIsCreateModalOpen(false);
-    setRequestAmount('');
-    setSelectedAsset('rwaTBILL');
-    
-    // In a real app, you would add the new request to the list
-    alert('Request submitted successfully!');
-  };
-
-  // Claim request
-  const handleClaim = (request) => {
-    if (request.status !== 'Claimable') {
-      return;
-    }
-    
-    // In a real app, you would call the smart contract
-    alert(`Claimed ${request.amountUSDC} USDC from request ${request.id}`);
-  };
+  const epochColumns = [
+    { key: 'epoch', header: 'Epoch', sortable: false },
+    { key: 'state', header: 'State', sortable: false },
+    { key: 'shares', header: 'Batched Shares', sortable: false, align: 'right' },
+    { key: 'nav', header: 'NAV at Settle', sortable: false, align: 'right' },
+    { key: 'timing', header: 'Timing', sortable: false, align: 'right' },
+  ];
 
   return (
     <div className="page-content stagger-children">
       {/* Header */}
       <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 'var(--spacing-lg)',
-          flexWrap: 'wrap',
-          gap: 'var(--spacing-lg)',
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 'var(--spacing-lg)',
+            flexWrap: 'wrap',
+            gap: 'var(--spacing-lg)',
+          }}
+        >
           <div>
             <h1 className="text-headline-lg">Redemption Queue</h1>
             <p className="text-body-md" style={{ color: 'var(--on-surface-variant)', marginTop: '4px' }}>
-              Queue for NAV settlement and earn the price of patience
+              ERC-7540 issuer-batch epochs — settle at full NAV and earn the price of patience
             </p>
           </div>
-          <Button variant="primary" size="md" onClick={() => setIsCreateModalOpen(true)}>
+          <Button
+            variant="primary"
+            size="md"
+            onClick={() => {
+              requestFlow.reset();
+              setIsCreateModalOpen(true);
+            }}
+            disabled={!isConnected}
+          >
             + Create Request
           </Button>
         </div>
       </motion.div>
 
+      {/* Asset (queue) selector */}
+      <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: 'var(--spacing-sm)',
+            marginBottom: 'var(--spacing-lg)',
+            flexWrap: 'wrap',
+          }}
+        >
+          {RWA_LIST.map((a) => (
+            <Button
+              key={a.id}
+              variant={selectedAsset === a.id ? 'primary' : 'ghost'}
+              size="sm"
+              onClick={() => setSelectedAsset(a.id)}
+            >
+              <span>{a.logo}</span>
+              <span>{a.symbol} queue</span>
+            </Button>
+          ))}
+          <a
+            href={`${EXPLORER_URL}/address/${asset.queue}`}
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              alignSelf: 'center',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '11px',
+              color: 'var(--on-surface-variant)',
+              textDecoration: 'none',
+            }}
+          >
+            contract ↗
+          </a>
+        </div>
+      </motion.div>
+
+      {/* Claimable banner */}
+      {claimableShares > 0 && (
+        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+          <GlassCard level={1} glow={true}>
+            <div
+              style={{
+                padding: 'var(--spacing-lg)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 'var(--spacing-md)',
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: '18px',
+                    fontWeight: '700',
+                    color: 'var(--primary)',
+                  }}
+                >
+                  Settlement ready to claim
+                </div>
+                <div
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '12px',
+                    color: 'var(--on-surface-variant)',
+                    marginTop: '4px',
+                  }}
+                >
+                  {claimableShares.toLocaleString('en-US', { maximumFractionDigits: 4 })} {asset.symbol}{' '}
+                  settled — pays NAV at settlement minus {queue?.queueFeeBps ?? 5} bps queue fee
+                </div>
+              </div>
+              <Button
+                variant="primary"
+                size="md"
+                loading={claimFlow.status === 'pending'}
+                onClick={claimAll}
+              >
+                Claim USDC
+              </Button>
+            </div>
+            {claimFlow.status !== 'idle' && (
+              <div style={{ padding: '0 var(--spacing-lg) var(--spacing-lg)' }}>
+                <TxStatus
+                  status={claimFlow.status}
+                  step={claimFlow.step}
+                  errorMessage={claimFlow.errorMessage}
+                  txHash={claimFlow.txHash}
+                  successLabel="Claimed"
+                />
+              </div>
+            )}
+          </GlassCard>
+        </motion.div>
+      )}
+
       {/* Tabs */}
       <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-        <div style={{
-          display: 'flex',
-          gap: 'var(--spacing-sm)',
-          marginBottom: 'var(--spacing-xl)',
-          borderBottom: '1px solid var(--border-glass)',
-          paddingBottom: 'var(--spacing-md)',
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: 'var(--spacing-sm)',
+            margin: 'var(--spacing-lg) 0 var(--spacing-xl)',
+            borderBottom: '1px solid var(--border-glass)',
+            paddingBottom: 'var(--spacing-md)',
+          }}
+        >
           <Button
             variant={activeTab === 'my-requests' ? 'primary' : 'ghost'}
             size="sm"
@@ -130,11 +261,11 @@ const QueuePage = () => {
             My Requests ({userRequests.length})
           </Button>
           <Button
-            variant={activeTab === 'all' ? 'primary' : 'ghost'}
+            variant={activeTab === 'epochs' ? 'primary' : 'ghost'}
             size="sm"
-            onClick={() => setActiveTab('all')}
+            onClick={() => setActiveTab('epochs')}
           >
-            All Requests ({allRequests.length})
+            Epoch Pipeline
           </Button>
           <Button
             variant={activeTab === 'stats' ? 'primary' : 'ghost'}
@@ -150,88 +281,78 @@ const QueuePage = () => {
       <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
         {activeTab === 'my-requests' && (
           <>
-            {userRequests.length === 0 ? (
-              <GlassCard level={1} glow={false}>
-                <div style={{
-                  padding: 'var(--spacing-xl)',
-                  textAlign: 'center',
-                }}>
-                  <div style={{
-                    fontSize: '48px',
-                    marginBottom: 'var(--spacing-md)',
-                    color: 'var(--on-surface-variant)',
-                    opacity: 0.5,
-                  }}>
-                    📄
-                  </div>
-                  <h3 className="text-headline-lg" style={{
-                    fontSize: '20px',
-                    marginBottom: 'var(--spacing-sm)',
-                  }}>
-                    No Requests Yet
-                  </h3>
-                  <p className="text-body-md" style={{ color: 'var(--on-surface-variant)' }}>
-                    Your queued redemption requests will appear here.
-                  </p>
-                  <Button 
-                    variant="primary" 
-                    size="md" 
-                    style={{ marginTop: 'var(--spacing-lg)' }}
-                    onClick={() => setIsCreateModalOpen(true)}
-                  >
+            {!isConnected ? (
+              <EmptyState
+                icon="👛"
+                title="Connect Your Wallet"
+                body="Connect a wallet to see and create redemption requests."
+              />
+            ) : isLoading ? (
+              <EmptyState icon="⏳" title="Loading" body="Reading queue state from Sepolia…" />
+            ) : userRequests.length === 0 ? (
+              <EmptyState
+                icon="📄"
+                title="No Requests Yet"
+                body="Queue your RWAs for settlement at full NAV — requests appear here with their epoch status."
+                action={
+                  <Button variant="primary" size="md" onClick={() => setIsCreateModalOpen(true)}>
                     Create Your First Request
                   </Button>
-                </div>
-              </GlassCard>
+                }
+              />
             ) : (
               <GlassCard level={1} glow={false} padding="0">
                 <DataTable
                   columns={requestColumns}
-                  data={(activeTab === 'my-requests' ? userRequests : allRequests).map(request => ({
-                    id: request.id,
-                    asset: (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span>{request.asset.logo}</span>
-                        <Chip variant="asset" value={request.asset.symbol} size="sm" />
-                      </div>
+                  data={userRequests.map((request) => ({
+                    id: `epoch-${request.epoch}`,
+                    epoch: (
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '13px' }}>
+                        #{request.epoch}
+                      </span>
                     ),
                     amount: (
                       <div style={{ textAlign: 'right' }}>
                         <div style={{ fontFamily: 'var(--font-mono)', fontSize: '13px' }}>
-                          {formatTokenAmount(request.amountTokens, '', 2)} {request.asset.symbol}
+                          {request.shares.toLocaleString('en-US', { maximumFractionDigits: 4 })}{' '}
+                          {asset.symbol}
                         </div>
-                        <div style={{ 
-                          fontFamily: 'var(--font-mono)', 
-                          fontSize: '11px', 
-                          color: 'var(--on-surface-variant)' 
-                        }}>
-                          ≈ {formatUSD(request.amountUSDC)}
+                        <div
+                          style={{
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: '11px',
+                            color: 'var(--on-surface-variant)',
+                          }}
+                        >
+                          ≈ {formatUSD(request.shares * (request.navAtSettle || nav))}
                         </div>
                       </div>
                     ),
                     status: (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <StatusDot status={request.status.toLowerCase()} size="sm" />
-                        <span style={{ 
-                          fontFamily: 'var(--font-mono)', 
-                          fontSize: '11px',
-                          color: statusColors[request.status.toLowerCase()]?.text || 'var(--on-surface-variant)'
-                        }}>
+                        <span
+                          style={{
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: '11px',
+                            color:
+                              statusColors[request.status.toLowerCase()]?.text ||
+                              'var(--on-surface-variant)',
+                          }}
+                        >
                           {request.status}
                         </span>
                       </div>
                     ),
-                    submitted: formatDate(request.submittedAt),
-                    settlement: formatDate(request.expectedSettlement),
-                    actions: request.status === 'Claimable' && (
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() => handleClaim(request)}
-                      >
-                        Claim
-                      </Button>
-                    ),
+                    settlement:
+                      request.status === 'Claimable'
+                        ? `settled ${formatTimeAgo(request.settledAt * 1000)}`
+                        : request.submittedAt > 0
+                          ? `submitted ${formatTimeAgo(request.submittedAt * 1000)}`
+                          : `epoch #${request.epoch} open`,
+                    payout: request.estPayout
+                      ? formatUSD(request.estPayout)
+                      : `≈ ${formatUSD(request.shares * nav)} at NAV`,
                   }))}
                 />
               </GlassCard>
@@ -239,109 +360,76 @@ const QueuePage = () => {
           </>
         )}
 
-        {activeTab === 'all' && (
+        {activeTab === 'epochs' && (
           <GlassCard level={1} glow={false} padding="0">
-            <DataTable
-              columns={requestColumns}
-              data={allRequests.map(request => ({
-                id: request.id,
-                asset: (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span>{request.asset.logo}</span>
-                    <Chip variant="asset" value={request.asset.symbol} size="sm" />
-                  </div>
-                ),
-                amount: (
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '13px' }}>
-                      {formatTokenAmount(request.amountTokens, '', 2)} {request.asset.symbol}
-                    </div>
-                    <div style={{ 
-                      fontFamily: 'var(--font-mono)', 
-                      fontSize: '11px', 
-                      color: 'var(--on-surface-variant)' 
-                    }}>
-                      ≈ {formatUSD(request.amountUSDC)}
-                    </div>
-                  </div>
-                ),
-                status: (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <StatusDot status={request.status.toLowerCase()} size="sm" />
-                    <span style={{ 
-                      fontFamily: 'var(--font-mono)', 
-                      fontSize: '11px',
-                      color: statusColors[request.status.toLowerCase()]?.text || 'var(--on-surface-variant)'
-                    }}>
-                      {request.status}
+            {(queue?.epochs ?? []).length === 0 ? (
+              <EmptyState icon="🗂" title="No Epochs" body="The queue has no batches yet." flat />
+            ) : (
+              <DataTable
+                columns={epochColumns}
+                data={queue.epochs.map((e) => ({
+                  id: `e-${e.epoch}`,
+                  epoch: (
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '13px' }}>
+                      #{e.epoch}
+                      {e.isOpen && (
+                        <Chip variant="default" value="open" size="sm" style={{ marginLeft: '8px' }} />
+                      )}
                     </span>
-                  </div>
-                ),
-                submitted: formatDate(request.submittedAt),
-                settlement: formatDate(request.expectedSettlement),
-                actions: null,
-              }))}
-            />
+                  ),
+                  state: (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <StatusDot
+                        status={e.state === 'Claimable' ? 'claimable' : 'pending'}
+                        size="sm"
+                      />
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px' }}>
+                        {e.isOpen ? 'Accepting requests' : e.state}
+                      </span>
+                    </div>
+                  ),
+                  shares: `${e.totalShares.toLocaleString('en-US', { maximumFractionDigits: 2 })} ${asset.symbol}`,
+                  nav: e.navAtSettle > 0 ? formatUSD(e.navAtSettle, 4) : '—',
+                  timing:
+                    e.state === 'Claimable'
+                      ? `settled ${formatTimeAgo(e.settledAt * 1000)}`
+                      : e.submittedAt > 0
+                        ? `submitted ${formatTimeAgo(e.submittedAt * 1000)}`
+                        : '—',
+                }))}
+              />
+            )}
           </GlassCard>
         )}
 
-        {activeTab === 'stats' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 'var(--spacing-lg)' }}>
-            <GlassCard level={1} glow={false}>
-              <div style={{ padding: 'var(--spacing-lg)' }}>
-                <h3 style={{ fontFamily: 'var(--font-body)', fontSize: '14px', fontWeight: '500', color: 'var(--on-surface)', marginBottom: 'var(--spacing-md)' }}>
-                  Total Backlog
-                </h3>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: '28px', fontWeight: '700', color: 'var(--primary)' }}>
-                  {queueStats.totalBacklog}
-                </div>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--on-surface-variant)', marginTop: '4px' }}>
-                  pending requests
-                </p>
-              </div>
-            </GlassCard>
-
-            <GlassCard level={1} glow={false}>
-              <div style={{ padding: 'var(--spacing-lg)' }}>
-                <h3 style={{ fontFamily: 'var(--font-body)', fontSize: '14px', fontWeight: '500', color: 'var(--on-surface)', marginBottom: 'var(--spacing-md)' }}>
-                  Total Value
-                </h3>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: '28px', fontWeight: '700', color: 'var(--primary)' }}>
-                  {formatUSD(queueStats.totalValue)}
-                </div>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--on-surface-variant)', marginTop: '4px' }}>
-                  across all requests
-                </p>
-              </div>
-            </GlassCard>
-
-            <GlassCard level={1} glow={false}>
-              <div style={{ padding: 'var(--spacing-lg)' }}>
-                <h3 style={{ fontFamily: 'var(--font-body)', fontSize: '14px', fontWeight: '500', color: 'var(--on-surface)', marginBottom: 'var(--spacing-md)' }}>
-                  Avg. Settlement Time
-                </h3>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: '28px', fontWeight: '700', color: 'var(--primary)' }}>
-                  {queueStats.averageSettlementTime}
-                </div>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--on-surface-variant)', marginTop: '4px' }}>
-                  from submission to claim
-                </p>
-              </div>
-            </GlassCard>
-
-            <GlassCard level={1} glow={false}>
-              <div style={{ padding: 'var(--spacing-lg)' }}>
-                <h3 style={{ fontFamily: 'var(--font-body)', fontSize: '14px', fontWeight: '500', color: 'var(--on-surface)', marginBottom: 'var(--spacing-md)' }}>
-                  Next Epoch
-                </h3>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: '28px', fontWeight: '700', color: 'var(--primary)' }}>
-                  #{queueStats.nextEpoch}
-                </div>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--on-surface-variant)', marginTop: '4px' }}>
-                  {formatDate(queueStats.nextEpochTime)}
-                </p>
-              </div>
-            </GlassCard>
+        {activeTab === 'stats' && queue && (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+              gap: 'var(--spacing-lg)',
+            }}
+          >
+            <StatCard
+              title="Open Epoch"
+              value={`#${queue.currentEpoch}`}
+              hint={`${(queue.epochs.find((e) => e.isOpen)?.totalShares ?? 0).toLocaleString('en-US', { maximumFractionDigits: 2 })} ${asset.symbol} pending`}
+            />
+            <StatCard
+              title="Settlement Cash Held"
+              value={formatUSD(queue.totalAssets)}
+              hint="claims pay only from received settlement — structurally solvent"
+            />
+            <StatCard
+              title="Last Settled NAV"
+              value={queue.lastSettledNav > 0 ? formatUSD(queue.lastSettledNav, 4) : '—'}
+              hint={`last settled epoch #${queue.lastSettledEpoch}`}
+            />
+            <StatCard
+              title="Issuer Window"
+              value={`${queue.issuerWindowSec}s`}
+              hint={`compressed demo of ${asset.settlement} · queue fee ${queue.queueFeeBps} bps`}
+            />
           </div>
         )}
       </motion.div>
@@ -355,41 +443,35 @@ const QueuePage = () => {
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
           <p className="text-body-md" style={{ color: 'var(--on-surface-variant)', margin: 0 }}>
-            Queue your RWAs for settlement at full NAV. You'll earn yield while waiting,
-            and the price of patience is paid by instant exiters.
+            Your {asset.symbol} is escrowed into the current issuer batch epoch. When the issuer
+            settles, you claim <strong>full NAV at settlement</strong> minus a{' '}
+            {queue?.queueFeeBps ?? 5} bps queue fee.
           </p>
 
           {/* Asset Selection */}
           <div>
-            <label style={{
-              display: 'block',
-              fontFamily: 'var(--font-body)',
-              fontSize: '14px',
-              fontWeight: '500',
-              color: 'var(--on-surface)',
-              marginBottom: '6px',
-            }}>
+            <label
+              style={{
+                display: 'block',
+                fontFamily: 'var(--font-body)',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: 'var(--on-surface)',
+                marginBottom: '6px',
+              }}
+            >
               Select Asset
             </label>
-            <div style={{
-              display: 'flex',
-              gap: 'var(--spacing-sm)',
-              flexWrap: 'wrap',
-            }}>
-              {assetOptions.map((asset) => (
+            <div style={{ display: 'flex', gap: 'var(--spacing-sm)', flexWrap: 'wrap' }}>
+              {RWA_LIST.map((a) => (
                 <Button
-                  key={asset.id}
-                  variant={selectedAsset === asset.id ? 'primary' : 'ghost'}
+                  key={a.id}
+                  variant={selectedAsset === a.id ? 'primary' : 'ghost'}
                   size="sm"
-                  onClick={() => setSelectedAsset(asset.id)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                  }}
+                  onClick={() => setSelectedAsset(a.id)}
                 >
-                  <span>{asset.logo}</span>
-                  <span>{asset.symbol}</span>
+                  <span>{a.logo}</span>
+                  <span>{a.symbol}</span>
                 </Button>
               ))}
             </div>
@@ -397,109 +479,177 @@ const QueuePage = () => {
 
           {/* Amount Input */}
           <div>
-            <label style={{
-              display: 'block',
-              fontFamily: 'var(--font-body)',
-              fontSize: '14px',
-              fontWeight: '500',
-              color: 'var(--on-surface)',
-              marginBottom: '6px',
-            }}>
+            <label
+              style={{
+                display: 'block',
+                fontFamily: 'var(--font-body)',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: 'var(--on-surface)',
+                marginBottom: '6px',
+              }}
+            >
               Amount
             </label>
             <InputField
               value={requestAmount}
               onChange={(e) => setRequestAmount(e.target.value)}
               placeholder="0"
-              suffix={assets[selectedAsset]?.symbol || ''}
+              suffix={asset.symbol}
               type="number"
+              error={
+                requestAmount && amountNum > balance
+                  ? `Insufficient balance (${balance.toLocaleString('en-US', { maximumFractionDigits: 4 })})`
+                  : undefined
+              }
             />
-            <div style={{
-              marginTop: '4px',
-              fontFamily: 'var(--font-mono)',
-              fontSize: '11px',
-              color: 'var(--on-surface-variant)',
-            }}>
-              Balance: {assets[selectedAsset]?.symbol ? `100 ${assets[selectedAsset].symbol}` : '0'}
+            <div
+              style={{
+                marginTop: '4px',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '11px',
+                color: 'var(--on-surface-variant)',
+                display: 'flex',
+                justifyContent: 'space-between',
+              }}
+            >
+              <span>
+                Balance: {balance.toLocaleString('en-US', { maximumFractionDigits: 4 })} {asset.symbol}
+              </span>
+              {balance > 0 && (
+                <button
+                  onClick={() => setRequestAmount(String(balance))}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--primary-container)',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '11px',
+                    padding: 0,
+                  }}
+                >
+                  MAX
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Selected Asset Info */}
-          {selectedAsset && assets[selectedAsset] && (
-            <GlassCard level={2} glow={false}>
-              <div style={{
-                padding: 'var(--spacing-md)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '20px' }}>{assets[selectedAsset].logo}</span>
-                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: '600' }}>
-                    {assets[selectedAsset].name}
-                  </span>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--on-surface-variant)' }}>
-                    Current NAV
-                  </div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', fontWeight: '500' }}>
-                    {formatUSD(assets[selectedAsset].currentNAV)}
-                  </div>
-                </div>
-              </div>
-              <div style={{
-                padding: 'var(--spacing-md)',
-                borderTop: '1px solid var(--border-glass)',
-              }}>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '12px',
-                }}>
-                  <span style={{ color: 'var(--on-surface-variant)' }}>Settlement</span>
-                  <span>{assets[selectedAsset].settlement}</span>
-                </div>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '12px',
-                  marginTop: '4px',
-                }}>
-                  <span style={{ color: 'var(--on-surface-variant)' }}>Queue Fee</span>
-                  <span>5 bps</span>
-                </div>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '12px',
-                  marginTop: '4px',
-                }}>
-                  <span style={{ color: 'var(--on-surface-variant)' }}>Issuance APY</span>
-                  <span>{formatPercent(assets[selectedAsset].issuanceAPY, 2)}</span>
-                </div>
-              </div>
-            </GlassCard>
-          )}
+          {/* Request preview */}
+          <GlassCard level={2} glow={false}>
+            <div style={{ padding: 'var(--spacing-md)' }}>
+              <PreviewRow label="Current NAV" value={nav ? formatUSD(nav, 4) : '—'} />
+              <PreviewRow
+                label="Files into epoch"
+                value={queue ? `#${queue.currentEpoch}` : '—'}
+              />
+              <PreviewRow
+                label="Issuer window"
+                value={`${queue?.issuerWindowSec ?? '—'}s (demo of ${asset.settlement})`}
+              />
+              <PreviewRow
+                label="Est. payout at today's NAV"
+                value={
+                  validAmount
+                    ? formatUSD(amountNum * nav * (1 - (queue?.queueFeeBps ?? 5) / 10_000))
+                    : '—'
+                }
+                last
+              />
+            </div>
+          </GlassCard>
+
+          <TxStatus
+            status={requestFlow.status}
+            step={requestFlow.step}
+            errorMessage={requestFlow.errorMessage}
+            txHash={requestFlow.txHash}
+            successLabel="Request filed into the epoch"
+          />
 
           {/* Submit Button */}
           <Button
             variant="primary"
             size="lg"
             fullWidth
-            disabled={!selectedAsset || !requestAmount || isNaN(requestAmount) || Number(requestAmount) <= 0 || isSubmitting}
-            loading={isSubmitting}
-            onClick={handleCreateRequest}
+            disabled={!isConnected || !validAmount || requestFlow.status === 'pending'}
+            loading={requestFlow.status === 'pending'}
+            onClick={submitRequest}
           >
-            Submit to Queue
+            {isConnected ? 'Submit to Queue' : 'Connect wallet first'}
           </Button>
         </div>
       </Modal>
     </div>
   );
 };
+
+const EmptyState = ({ icon, title, body, action, flat = false }) => (
+  <GlassCard level={flat ? 2 : 1} glow={false}>
+    <div style={{ padding: 'var(--spacing-xl)', textAlign: 'center' }}>
+      <div style={{ fontSize: '48px', marginBottom: 'var(--spacing-md)', opacity: 0.5 }}>{icon}</div>
+      <h3 className="text-headline-lg" style={{ fontSize: '20px', marginBottom: 'var(--spacing-sm)' }}>
+        {title}
+      </h3>
+      <p className="text-body-md" style={{ color: 'var(--on-surface-variant)' }}>
+        {body}
+      </p>
+      {action && <div style={{ marginTop: 'var(--spacing-lg)' }}>{action}</div>}
+    </div>
+  </GlassCard>
+);
+
+const StatCard = ({ title, value, hint }) => (
+  <GlassCard level={1} glow={false}>
+    <div style={{ padding: 'var(--spacing-lg)' }}>
+      <h3
+        style={{
+          fontFamily: 'var(--font-body)',
+          fontSize: '14px',
+          fontWeight: '500',
+          color: 'var(--on-surface)',
+          marginBottom: 'var(--spacing-md)',
+        }}
+      >
+        {title}
+      </h3>
+      <div
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: '28px',
+          fontWeight: '700',
+          color: 'var(--primary)',
+        }}
+      >
+        {value}
+      </div>
+      <p
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '11px',
+          color: 'var(--on-surface-variant)',
+          marginTop: '4px',
+        }}
+      >
+        {hint}
+      </p>
+    </div>
+  </GlassCard>
+);
+
+const PreviewRow = ({ label, value, last = false }) => (
+  <div
+    style={{
+      display: 'flex',
+      justifyContent: 'space-between',
+      fontFamily: 'var(--font-mono)',
+      fontSize: '12px',
+      marginBottom: last ? 0 : '6px',
+    }}
+  >
+    <span style={{ color: 'var(--on-surface-variant)' }}>{label}</span>
+    <span style={{ color: 'var(--on-surface)' }}>{value}</span>
+  </div>
+);
 
 export default QueuePage;
