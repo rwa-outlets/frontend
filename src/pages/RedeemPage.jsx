@@ -414,6 +414,18 @@ const bigInputStyle = {
   padding: 0,
 };
 
+const maxBtnStyle = {
+  background: 'none',
+  border: 'none',
+  color: 'var(--primary-container)',
+  cursor: 'pointer',
+  fontFamily: 'var(--font-mono)',
+  fontSize: '11px',
+  fontWeight: '600',
+  padding: 0,
+  marginLeft: '6px',
+};
+
 const tokenPillStyle = {
   display: 'flex',
   alignItems: 'center',
