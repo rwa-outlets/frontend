@@ -21,24 +21,26 @@ const AVATAR_STILL = '/agent/character-still.png';
  * /api/v1/chat/completions.
  */
 
+// Icon-tile tints per theme: soft glows on the dark glass, deeper saturated
+// washes on light so the tiles stay visible against white cards.
 const SUGGESTIONS = [
   {
     icon: '💧',
-    tint: 'rgba(0, 163, 255, 0.15)',
+    tint: { dark: 'rgba(0, 163, 255, 0.18)', light: 'rgba(0, 106, 190, 0.16)' },
     label: 'Where to LP',
-    prompt: 'Which pool should I provide liquidity to right now — Express (rwaTBILL) or Patient (rwaCREDIT)? Compare recent swap volume and how exits priced vs NAV, then recommend one.',
+    prompt: 'Which pool should I LP into right now — Express or Patient?',
   },
   {
     icon: '⚖️',
-    tint: 'rgba(255, 0, 163, 0.12)',
-    label: 'Instant exit vs queue',
-    prompt: 'I hold rwaTBILL. Should I exit instantly through a pool or queue a delayed redemption? Use recent execution rates vs NAV to estimate what each path costs me.',
+    tint: { dark: 'rgba(255, 0, 163, 0.15)', light: 'rgba(190, 0, 120, 0.14)' },
+    label: 'Exit strategy',
+    prompt: 'Should I exit rwaTBILL instantly or queue a redemption?',
   },
   {
     icon: '📈',
-    tint: 'rgba(255, 196, 0, 0.15)',
-    label: 'NAV trend check',
-    prompt: 'How have rwaTBILL and rwaCREDIT NAVs moved recently, and are pool exits clearing tighter or wider vs NAV? Is now a good time to sell?',
+    tint: { dark: 'rgba(255, 196, 0, 0.18)', light: 'rgba(180, 130, 0, 0.18)' },
+    label: 'NAV trend',
+    prompt: 'How are NAVs trending — is now a good time to sell?',
   },
 ];
 
@@ -218,7 +220,7 @@ const AssistantPage = () => {
                     width: '36px',
                     height: '36px',
                     borderRadius: 'var(--rounded-md)',
-                    background: s.tint,
+                    background: isDark ? s.tint.dark : s.tint.light,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
