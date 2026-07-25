@@ -102,26 +102,18 @@ const Sidebar = () => {
           background: 'rgba(255, 255, 255, 0.02)',
         }}>
           {!isCollapsed && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'var(--spacing-sm)',
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center', 
+              width: '100%', 
+              padding: 'var(--spacing-sm) 0',
             }}>
-              <span style={{
-                fontSize: '20px',
-                color: 'var(--primary-container)',
-              }}>
-                ⚡
-              </span>
-              <span style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '18px',
-                fontWeight: '700',
-                color: 'var(--primary)',
-                letterSpacing: '-0.02em',
-              }}>
-                Aetheric
-              </span>
+              <img
+                src="/logo.png"
+                alt="RWA Outlet Logo"
+                style={{ height: '64px', width: 'auto' }}
+              />
             </div>
           )}
           {isCollapsed && (
