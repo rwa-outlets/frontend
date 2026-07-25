@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NEON_AI | Protocol_01</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@100..800&amp;family=JetBrains+Mono:wght@100..800&amp;family=Hanken+Grotesk:wght@100..900&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@100..900&amp;family=JetBrains+Mono:wght@100..900&amp;family=Sora:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#1b1b1b",
+                        "surface-tint": "#00e383",
+                        "inverse-surface": "#e2e2e2",
+                        "surface-container-high": "#2a2a2a",
+                        "secondary-container": "#454747",
+                        "surface-container": "#1f1f1f",
+                        "on-secondary-fixed-variant": "#454747",
+                        "surface": "#131313",
+                        "glass-surface-high": "rgba(255, 255, 255, 0.15)",
+                        "tertiary": "#fffbf9",
+                        "on-surface": "#e2e2e2",
+                        "on-primary": "#00391d",
+                        "surface-container-lowest": "#0e0e0e",
+                        "surface-bright": "#393939",
+                        "on-error": "#690005",
+                        "primary-fixed-dim": "#00e383",
+                        "tertiary-fixed-dim": "#e5c45b",
+                        "inverse-on-surface": "#303030",
+                        "inverse-primary": "#006d3c",
+                        "outline": "#849586",
+                        "glass-border": "rgba(255, 255, 255, 0.20)",
+                        "outline-variant": "#3b4b3e",
+                        "tertiary-fixed": "#ffe085",
+                        "on-tertiary-container": "#775f00",
+                        "secondary": "#c6c6c7",
+                        "surface-variant": "#353535",
+                        "on-secondary-container": "#b4b5b5",
+                        "primary-fixed": "#5bffa1",
+                        "secondary-fixed": "#e2e2e2",
+                        "on-primary-fixed": "#00210e",
+                        "error-container": "#93000a",
+                        "surface-container-highest": "#353535",
+                        "on-error-container": "#ffdad6",
+                        "on-tertiary-fixed-variant": "#574500",
+                        "surface-dim": "#131313",
+                        "on-tertiary": "#3c2f00",
+                        "glass-inset": "rgba(255, 255, 255, 0.08)",
+                        "secondary-fixed-dim": "#c6c6c7",
+                        "on-primary-fixed-variant": "#00522c",
+                        "on-tertiary-fixed": "#231b00",
+                        "on-surface-variant": "#b9cbbb",
+                        "on-primary-container": "#00713f",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "background": "#000000",
+                        "primary-container": "#00ff94",
+                        "neon-glow": "rgba(0, 255, 148, 0.40)",
+                        "on-secondary": "#2f3131",
+                        "glass-surface-low": "rgba(255, 255, 255, 0.05)",
+                        "error": "#ffb4ab",
+                        "tertiary-container": "#ffdc71",
+                        "primary": "#f2fff1",
+                        "on-background": "#e2e2e2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "4px",
+                        "lg": "8px",
+                        "xl": "12px",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "max-width": "1200px",
+                        "gutter": "16px",
+                        "margin-mobile": "16px",
+                        "unit": "4px",
+                        "margin-desktop": "32px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["JetBrains Mono"],
+                        "label-caps": ["JetBrains Mono"],
+                        "body-md": ["Hanken Grotesk"],
+                        "headline-lg-mobile": ["Sora"],
+                        "headline-lg": ["Sora"],
+                        "body-sm": ["Hanken Grotesk"],
+                        "headline-xl": ["Sora"]
+                    },
+                    "fontSize": {
+                        "label-md": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "label-caps": ["10px", {"lineHeight": "1.0", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-sm": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "headline-xl": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    },
+                    "boxShadow": {
+                        "neon-glow": "0 0 20px rgba(0, 255, 148, 0.25)"
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #000000; color: #e2e2e2; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        .glass-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 100%);
+            pointer-events: none;
+        }
+        .plug-in-anim {
+            animation: plugIn 0.3s ease-out forwards;
+        }
+        @keyframes plugIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .typing-pulse {
+            animation: pulse 1.5s infinite alternate;
+        }
+        @keyframes pulse {
+            from { opacity: 0.4; }
+            to { opacity: 1; }
+        }
+        .neon-border-glow {
+            box-shadow: 0 0 10px rgba(0, 255, 148, 0.2);
+            transition: all 0.3s ease;
+        }
+        .neon-border-glow:hover {
+            box-shadow: 0 0 20px rgba(0, 255, 148, 0.4);
+        }
+    </style>
+</head>
+<body class="overflow-hidden h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="bg-glass-surface-high backdrop-blur-xl border-b border-glass-border flex justify-between items-center w-full px-margin-desktop h-16 z-50 fixed top-0 docked full-width shadow-neon-glow">
+<div class="flex items-center gap-4">
+<span class="font-headline-lg text-headline-lg font-bold text-surface-tint tracking-tighter">NEON_AI</span>
+</div>
+<div class="hidden md:flex gap-8 items-center h-full">
+<nav class="flex gap-6 h-full items-center">
+<a class="font-label-md text-label-md text-surface-tint border-b-2 border-surface-tint px-2 py-5 transition-all" href="#">TERMINAL</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:bg-glass-surface-high transition-colors duration-200 px-2 py-5" href="#">ARCHIVES</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:bg-glass-surface-high transition-colors duration-200 px-2 py-5" href="#">NETWORK</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-surface-tint hover:bg-glass-surface-high p-2 rounded-full transition-colors" data-icon="tune">tune</button>
+<button class="material-symbols-outlined text-surface-tint hover:bg-glass-surface-high p-2 rounded-full transition-colors" data-icon="settings">settings</button>
+</div>
+</header>
+<div class="flex flex-1 pt-16 overflow-hidden">
+<!-- SideNavBar -->
+<aside class="hidden md:flex bg-glass-surface-low backdrop-blur-2xl border-r border-glass-border fixed left-0 top-0 h-screen w-[280px] flex-col py-8 px-4 z-40 flat no shadows">
+<div class="mt-16 mb-8 flex items-center gap-3 px-2">
+<div class="w-10 h-10 rounded-full border border-surface-tint flex items-center justify-center bg-surface-tint/10">
+<span class="material-symbols-outlined text-surface-tint" data-icon="bolt">bolt</span>
+</div>
+<div>
+<h3 class="font-headline-lg text-[18px] text-surface-tint leading-none">Protocol_01</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">AI Assistant Active</p>
+</div>
+</div>
+<nav class="flex-1 space-y-2">
+<button class="w-full flex items-center gap-3 px-4 py-3 bg-primary-container/10 text-surface-tint border-r-4 border-surface-tint transition-all translate-x-1 duration-200">
+<span class="material-symbols-outlined" data-icon="add_comment">add_comment</span>
+<span class="font-label-md text-label-md">New Chat</span>
+</button>
+<button class="w-full flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-glass-surface-high transition-all">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+<span class="font-label-md text-label-md">History</span>
+</button>
+<button class="w-full flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-glass-surface-high transition-all">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+<span class="font-label-md text-label-md">Analytics</span>
+</button>
+<button class="w-full flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-glass-surface-high transition-all">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</button>
+</nav>
+<button class="mt-auto mx-2 py-3 border border-glass-border rounded-lg text-on-surface-variant font-label-md text-label-md hover:bg-glass-surface-high transition-all uppercase tracking-widest">
+                Clear History
+            </button>
+</aside>
+<!-- Main Chat Area -->
+<main class="flex-1 md:ml-[280px] flex flex-col relative h-full bg-black overflow-hidden">
+<!-- Background Decoration -->
+
+<!-- Chat Feed -->
+<div class="flex-1 overflow-y-auto px-margin-mobile md:px-margin-desktop py-8 space-y-6" id="chat-feed">
+<!-- User Message -->
+<div class="flex justify-end plug-in-anim">
+<div class="max-w-[80%] glass-panel rounded-xl rounded-tr-none px-5 py-4 bg-primary-container/10 border-r-2 border-surface-tint">
+<p class="font-body-md text-body-md text-on-surface">Can you perform a diagnostic on the current neural sync protocols? I'm noticing a 14ms lag in the uplink.</p>
+<span class="block mt-2 font-label-caps text-label-caps text-on-surface-variant opacity-60">SENT 14:22</span>
+</div>
+</div>
+<!-- Agent Message -->
+<div class="flex justify-start plug-in-anim">
+<div class="flex gap-4 max-w-[85%]">
+<div class="w-10 h-10 rounded-full border border-glass-border flex-shrink-0 flex items-center justify-center bg-glass-surface-high">
+<span class="material-symbols-outlined text-surface-tint text-[20px]" data-icon="smart_toy">smart_toy</span>
+</div>
+<div class="space-y-4">
+<div class="glass-panel rounded-xl rounded-tl-none px-5 py-4">
+<p class="font-body-md text-body-md text-on-surface">Diagnostic complete. Detected a bottleneck in the Sub-Level 4 routing node. I can reroute traffic through the quantum-mesh buffer to eliminate the 14ms latency immediately.</p>
+<div class="mt-4 p-4 rounded bg-surface-container-low border border-glass-border">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-caps text-label-caps text-surface-tint uppercase">Proposed Action: Mesh Reroute</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">ID: PRT_992_A</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Rerouting will consume 4% additional compute power but will bring latency down to &lt; 1ms.</p>
+</div>
+<div class="mt-5 flex gap-3">
+<button class="flex-1 py-2 glass-panel rounded font-label-md text-label-md text-surface-tint border-surface-tint/50 hover:bg-surface-tint/20 transition-all active:scale-95 neon-border-glow">
+                                        Accept
+                                    </button>
+<button class="flex-1 py-2 glass-panel rounded font-label-md text-label-md text-on-surface-variant hover:bg-glass-surface-high transition-all active:scale-95">
+                                        Reject
+                                    </button>
+</div>
+<span class="block mt-3 font-label-caps text-label-caps text-on-surface-variant opacity-60">NEON_AI • ACTIVE</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Typing Indicator (Mockup) -->
+<div class="flex justify-start items-center gap-2 px-14 opacity-50">
+<span class="w-1.5 h-1.5 bg-surface-tint rounded-full typing-pulse"></span>
+<span class="w-1.5 h-1.5 bg-surface-tint rounded-full typing-pulse [animation-delay:0.2s]"></span>
+<span class="w-1.5 h-1.5 bg-surface-tint rounded-full typing-pulse [animation-delay:0.4s]"></span>
+</div>
+</div>
+<!-- Interaction Layer (Bottom) -->
+<div class="p-margin-mobile md:p-margin-desktop bg-gradient-to-t from-black via-black/80 to-transparent pt-12">
+<!-- Sample Query Cards -->
+<div class="flex gap-3 mb-6 overflow-x-auto pb-2 no-scrollbar">
+<button class="whitespace-nowrap px-4 py-2 glass-panel rounded-full font-label-md text-label-md text-on-surface-variant hover:text-surface-tint hover:border-surface-tint/50 transition-all flex items-center gap-2 group">
+<span class="material-symbols-outlined text-[16px] group-hover:scale-110" data-icon="query_stats">query_stats</span>
+                        Analyze current protocol
+                    </button>
+<button class="whitespace-nowrap px-4 py-2 glass-panel rounded-full font-label-md text-label-md text-on-surface-variant hover:text-surface-tint hover:border-surface-tint/50 transition-all flex items-center gap-2 group">
+<span class="material-symbols-outlined text-[16px] group-hover:scale-110" data-icon="security">security</span>
+                        Initiate system check
+                    </button>
+<button class="whitespace-nowrap px-4 py-2 glass-panel rounded-full font-label-md text-label-md text-on-surface-variant hover:text-surface-tint hover:border-surface-tint/50 transition-all flex items-center gap-2 group">
+<span class="material-symbols-outlined text-[16px] group-hover:scale-110" data-icon="sync">sync</span>
+                        Sync neural data
+                    </button>
+</div>
+<!-- Input Area -->
+<div class="relative group">
+<div class="absolute inset-0 bg-surface-tint opacity-[0.03] blur-xl rounded-xl group-focus-within:opacity-10 transition-opacity"></div>
+<div class="relative glass-panel bg-glass-inset rounded-xl p-2 flex items-center border-glass-border focus-within:border-surface-tint transition-all">
+<button class="p-3 text-on-surface-variant hover:text-surface-tint transition-colors">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+</button>
+<input class="flex-1 bg-transparent border-none text-on-surface focus:ring-0 font-body-md text-body-md placeholder:text-on-surface-variant/40" placeholder="Awaiting instruction..." type="text"/>
+<button class="p-3 mr-2 bg-primary-container text-on-primary rounded-lg font-bold flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(0,255,148,0.4)]">
+<span class="material-symbols-outlined" data-icon="send" style="font-variation-settings: 'FILL' 1;">send</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Mobile Navigation (Suppressed per task context, but here if needed for small screens) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-glass-surface-high backdrop-blur-xl border-t border-glass-border flex justify-around items-center z-50">
+<button class="flex flex-col items-center gap-1 text-surface-tint">
+<span class="material-symbols-outlined" data-icon="chat">chat</span>
+<span class="font-label-caps text-[8px]">CHAT</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+<span class="font-label-caps text-[8px]">HISTORY</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+<span class="font-label-caps text-[8px]">ANALYTICS</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-caps text-[8px]">SETTINGS</span>
+</button>
+</nav>
+<script>
+        // Micro-interaction for input glow
+        const input = document.querySelector('input');
+        const inputContainer = input.parentElement;
+
+        input.addEventListener('focus', () => {
+            inputContainer.classList.add('shadow-neon-glow');
+        });
+
+        input.addEventListener('blur', () => {
+            inputContainer.classList.remove('shadow-neon-glow');
+        });
+
+        // Simple scroll to bottom on load
+        const chatFeed = document.getElementById('chat-feed');
+        chatFeed.scrollTop = chatFeed.scrollHeight;
+
+        // Custom Animation for buttons
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('mousedown', () => btn.classList.add('scale-95'));
+            btn.addEventListener('mouseup', () => btn.classList.remove('scale-95'));
+            btn.addEventListener('mouseleave', () => btn.classList.remove('scale-95'));
+        });
+    </script>
+</body></html>
