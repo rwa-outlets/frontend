@@ -190,18 +190,29 @@ await check('aqua.rawBalances(probe)', () =>
   }),
 );
 
-// Event scan (same window as useTradeHistory)
-await check('router getLogs 40k blocks', async () => {
-  const latest = await client.getBlockNumber();
-  const logs = await client.getLogs({
-    address: ADDRESSES.OutletRouter,
-    events: outletRouterAbi.filter(
-      (i) => i.type === 'event' && (i.name === 'InstantExit' || i.name === 'Purchase'),
-    ),
-    fromBlock: latest - 40_000n,
-    toBlock: latest,
+// Event scan (same chunked window as useTradeHistory, via the logs RPC)
+await check('router getLogs (3 × 9.5k chunks via drpc)', async () => {
+  const logsClient = createPublicClient({
+    chain: sepolia,
+    transport: http('https://sepolia.drpc.org', { batch: true }),
   });
-  return `${logs.length} fills`;
+  const latest = await logsClient.getBlockNumber();
+  const events = outletRouterAbi.filter(
+    (i) => i.type === 'event' && (i.name === 'InstantExit' || i.name === 'Purchase'),
+  );
+  let count = 0;
+  for (let i = 0; i < 3; i++) {
+    const toBlock = latest - 9_500n * BigInt(i);
+    const fromBlock = toBlock - 9_500n + 1n;
+    const logs = await logsClient.getLogs({
+      address: ADDRESSES.OutletRouter,
+      events,
+      fromBlock,
+      toBlock,
+    });
+    count += logs.length;
+  }
+  return `${count} fills`;
 });
 
 let failed = 0;
