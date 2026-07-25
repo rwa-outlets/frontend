@@ -1,8 +1,11 @@
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
 import ThemeToggle from '../ui/ThemeToggle';
 import ConnectButton from '../wallet/ConnectButton';
 import FaucetButton from '../wallet/FaucetButton';
 import KycBadge from '../wallet/KycBadge';
+import GlassCard from '../ui/GlassCard';
+import ChatbotModal from '../ui/ChatbotModal';
 
 /**
  * TopBar Component
@@ -16,6 +19,8 @@ import KycBadge from '../wallet/KycBadge';
  */
 
 const TopBar = () => {
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
+  
   return (
     <header className="topbar">
       <div style={{
@@ -57,18 +62,35 @@ const TopBar = () => {
           </Link>
         </div>
 
-        {/* Center - Page Title (optional) */}
-        <div className="topbar-center">
-          <h1 style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: '20px',
-            fontWeight: '700',
-            color: 'var(--primary)',
-            letterSpacing: '-0.02em',
-            margin: 0,
-          }}>
-            Aetheric Outlets
-          </h1>
+        {/* Center - Search Bar (Chatbot Trigger) */}
+        <div className="topbar-center" style={{
+          flex: 1,
+          display: 'flex',
+          justifyContent: 'center',
+        }}>
+          <GlassCard
+            level={1}
+            glow={false}
+            onClick={() => setIsChatbotOpen(true)}
+            style={{
+              padding: 'var(--spacing-xs) var(--spacing-sm)',
+              height: '40px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--spacing-xs)',
+              cursor: 'pointer',
+              width: '100%',
+              maxWidth: '500px',
+            }}
+          >
+            <span style={{ fontSize: '16px' }}>🔍</span>
+            <span style={{
+              color: 'var(--text-secondary)',
+              fontSize: '14px',
+            }}>
+              Search tokens, pools, wallets...
+            </span>
+          </GlassCard>
         </div>
 
         {/* Right - Actions */}
@@ -82,6 +104,12 @@ const TopBar = () => {
 
           {/* Demo token faucet (also mints the KYC pass) */}
           <FaucetButton />
+          
+          {/* Chatbot Modal */}
+          <ChatbotModal
+            isOpen={isChatbotOpen}
+            onClose={() => setIsChatbotOpen(false)}
+          />
 
           {/* Theme Toggle */}
           <ThemeToggle />
