@@ -30,3 +30,7 @@ npm-debug.log*
 
 # Prompts (in case there are any sensitive prompts stored)
 Prompts/
+package.json
+pnpm-lock.yaml
+
+vite.config.js.timestamp-1785005787440-7970cc96318e18.mjs
