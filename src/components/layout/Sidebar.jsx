@@ -14,6 +14,7 @@ import { useTheme } from '../../theme/ThemeContext';
  */
 
 const navItems = [
+  { path: '/redeem', label: 'Redeem', icon: '🔁' },
   { path: '/dashboard', label: 'Dashboard', icon: '📊' },
   { path: '/pools', label: 'Pools', icon: '🏊' },
   { path: '/queue', label: 'Redemption Queue', icon: '🚀' },

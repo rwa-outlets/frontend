@@ -146,7 +146,7 @@ const HomePage = () => {
           <Button
             variant="primary"
             size="lg"
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/redeem')}
           >
             <span>Enter App</span>
             <span>→</span>

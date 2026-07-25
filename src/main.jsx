@@ -8,6 +8,7 @@ import { wagmiConfig } from './lib/wagmi';
 import { ThemeProvider } from './theme/ThemeContext';
 import App from './App';
 import HomePage from './pages/HomePage';
+import RedeemPage from './pages/RedeemPage';
 import DashboardPage from './pages/DashboardPage';
 import PoolsPage from './pages/PoolsPage';
 import PoolDetailPage from './pages/PoolDetailPage';
@@ -40,6 +41,7 @@ const AnimatedRoutes = () => {
         
         {/* All other pages use the App layout */}
         <Route element={<App />}>
+          <Route path="/redeem" element={<RedeemPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/pools" element={<PoolsPage />} />
           <Route path="/pools/:poolId" element={<PoolDetailPage />} />
