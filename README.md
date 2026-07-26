@@ -2,9 +2,14 @@
 
 A **fully functional UI shell** for RWA Outlets (branded "RWA Outlets") - an instant-liquidity market for tokenized real-world assets built on 1inch Aqua + SwapVM.
 
+## Demo
 
-https://github.com/user-attachments/assets/44f7b161-4969-4927-bafd-27b5c134c0b9
+<!-- GitHub only renders an inline README player for videos uploaded through its
+     web UI. To restore the inline player for the current demo: open this README
+     in the github.com editor, drag rwa-outlets-demo.mp4 into it, and replace the
+     link below with the generated user-attachments URL. -->
 
+[▶ Watch the demo video](rwa-outlets-demo.mp4) — mp4, 5.7 MB; GitHub plays it inline on the file page.
 
 ## Features
 
