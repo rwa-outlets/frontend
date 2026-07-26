@@ -4,12 +4,13 @@ A **fully functional UI shell** for RWA Outlets (branded "RWA Outlets") - an ins
 
 ## Demo
 
-<!-- GitHub only renders an inline README player for videos uploaded through its
-     web UI. To restore the inline player for the current demo: open this README
-     in the github.com editor, drag rwa-outlets-demo.mp4 into it, and replace the
-     link below with the generated user-attachments URL. -->
+[![RWA Outlets demo — sped-up preview, click for the full video](rwa-outlets-demo-preview.gif)](rwa-outlets-demo.mp4)
 
-[▶ Watch the demo video](rwa-outlets-demo.mp4) — mp4, 5.7 MB; GitHub plays it inline on the file page.
+18× sped-up preview — [▶ watch the full demo video](rwa-outlets-demo.mp4) (4 min, mp4; GitHub plays it on the file page).
+
+<!-- For a true inline README player, drag rwa-outlets-demo.mp4 into the README
+     editor on github.com and replace the GIF embed above with the generated
+     user-attachments URL. -->
 
 ## Features
 
