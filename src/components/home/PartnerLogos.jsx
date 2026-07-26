@@ -16,7 +16,7 @@ const PARTNERS = [
   { name: 'The Graph', logo: '/partners/thegraph.svg', url: 'https://thegraph.com', role: 'Indexing & queues subgraph' },
   { name: 'Uniswap', logo: '/partners/uniswap.svg', url: 'https://uniswap.org', role: 'Swap lane via Trading API' },
   { name: '1inch', logo: '/partners/1inch.svg', logoDark: '/partners/1inch-white.svg', url: 'https://1inch.com', role: 'Aqua liquidity routing' },
-  { name: 'ENS', logo: '/partners/ens.svg', url: 'https://ens.domains', role: 'Wallet identity & avatars' },
+  { name: 'Hedera', logo: '/partners/hedera.svg', url: 'https://hedera.com', role: 'Wallet identity & avatars' },
 ];
 
 const PartnerLogos = () => {
