@@ -128,13 +128,14 @@ const PoolsPage = () => {
             </div>
           </GlassCard>
         ) : (
-          <div
-            className="pool-grid"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-              gap: 'var(--spacing-lg)',
-            }}
+            <div
+              className="pool-grid"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                gap: 'var(--spacing-md)',
+                padding: '0 var(--spacing-xs)',
+              }}
           >
             {filteredPools.map((pool, index) => {
               const typeInfo = poolTypes[pool.type] ?? poolTypes.express;
@@ -142,78 +143,85 @@ const PoolsPage = () => {
                 <GlassCard key={pool.id} level={1} glow={index === 0}>
                   <Link
                     to={`/pools/${pool.hash}`}
-                    style={{ color: 'inherit', textDecoration: 'none', display: 'block' }}
+                    style={{ color: 'inherit', textDecoration: 'none', display: 'block', minWidth: 0 }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
-                      <div style={{ fontSize: '32px' }}>{typeInfo.icon}</div>
+                    {/* Title row — icon inline so it doesn't eat card width */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        marginBottom: '8px',
+                      }}
+                    >
+                      <span style={{ fontSize: '22px', lineHeight: 1 }}>{typeInfo.icon}</span>
+                      <h3
+                        style={{
+                          flex: 1,
+                          minWidth: 0,
+                          fontFamily: 'var(--font-display)',
+                          fontSize: '17px',
+                          fontWeight: '700',
+                          color: 'var(--primary)',
+                          margin: 0,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {poolTypeName(pool.type, pool.asset.symbol)}
+                      </h3>
+                      <StatusDot status={pool.active && pool.listed ? 'active' : 'error'} />
+                    </div>
 
-                      <div style={{ flex: 1 }}>
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            marginBottom: '8px',
-                          }}
-                        >
-                          <div>
-                            <h3
-                              style={{
-                                fontFamily: 'var(--font-display)',
-                                fontSize: '18px',
-                                fontWeight: '700',
-                                color: 'var(--primary)',
-                                marginBottom: '4px',
-                              }}
-                            >
-                              {poolTypeName(pool.type, pool.asset.symbol)}
-                            </h3>
-                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                              <Chip variant="pool" value={pool.type} size="sm" />
-                              <Chip variant="asset" value={pool.asset.symbol} size="sm" />
-                            </div>
-                          </div>
-                          <StatusDot status={pool.active && pool.listed ? 'active' : 'error'} />
-                        </div>
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                      <Chip variant="pool" value={pool.type} size="sm" />
+                      <Chip variant="asset" value={pool.asset.symbol} size="sm" />
+                    </div>
 
-                        <p
-                          style={{
-                            fontFamily: 'var(--font-body)',
-                            fontSize: '13px',
-                            color: 'var(--on-surface-variant)',
-                            marginBottom: '12px',
-                            lineHeight: '1.5',
-                          }}
-                        >
-                          {typeInfo.description}
-                        </p>
+                    <p
+                      style={{
+                        fontFamily: 'var(--font-body)',
+                        fontSize: '13px',
+                        color: 'var(--on-surface-variant)',
+                        marginBottom: '12px',
+                        lineHeight: '1.5',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {typeInfo.description}
+                    </p>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
-                          <PoolStat label="Shipped TVL" value={formatUSD(pool.tvl)} />
-                          <PoolStat label="NAV" value={formatUSD(pool.nav, 4)} />
-                          <PoolStat
-                            label="USDC side"
-                            value={formatUSD(pool.usdc)}
-                          />
-                          <PoolStat
-                            label={`${pool.asset.symbol} side`}
-                            value={pool.rwa.toLocaleString('en-US', { maximumFractionDigits: 2 })}
-                          />
-                        </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px 16px' }}>
+                      <PoolStat label="Shipped TVL" value={formatUSD(pool.tvl)} />
+                      <PoolStat label="NAV" value={formatUSD(pool.nav, 4)} />
+                      <PoolStat
+                        label="USDC side"
+                        value={formatUSD(pool.usdc)}
+                      />
+                      <PoolStat
+                        label={`${pool.asset.symbol} side`}
+                        value={pool.rwa.toLocaleString('en-US', { maximumFractionDigits: 2 })}
+                      />
+                    </div>
 
-                        <div
-                          style={{
-                            marginTop: '12px',
-                            fontFamily: 'var(--font-mono)',
-                            fontSize: '11px',
-                            color: 'var(--on-surface-variant)',
-                          }}
-                        >
-                          maker: {pool.vaultId ? pool.vaultName : formatAddress(pool.maker || pool.hash)}
-                          {' · '}
-                          {formatAddress(pool.hash, 10, 6)}
-                        </div>
-                      </div>
+                    <div
+                      style={{
+                        marginTop: '12px',
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '11px',
+                        color: 'var(--on-surface-variant)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      maker: {pool.vaultId ? pool.vaultName : formatAddress(pool.maker || pool.hash)}
+                      {' · '}
+                      {formatAddress(pool.hash, 10, 6)}
                     </div>
                   </Link>
                 </GlassCard>
@@ -314,14 +322,18 @@ const PoolsPage = () => {
 };
 
 const PoolStat = ({ label, value }) => (
-  <div>
+  <div style={{ minWidth: 0 }}>
     <div
       style={{
         fontFamily: 'var(--font-mono)',
-        fontSize: '11px',
+        fontSize: '10px',
         color: 'var(--on-surface-variant)',
         textTransform: 'uppercase',
-        letterSpacing: '0.08em',
+        letterSpacing: '0.06em',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        marginBottom: '2px',
       }}
     >
       {label}
@@ -329,9 +341,12 @@ const PoolStat = ({ label, value }) => (
     <div
       style={{
         fontFamily: 'var(--font-display)',
-        fontSize: '18px',
+        fontSize: '17px',
         fontWeight: '700',
         color: 'var(--primary)',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
       }}
     >
       {value}

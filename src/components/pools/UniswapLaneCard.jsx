@@ -151,7 +151,17 @@ const UniswapLaneCard = ({ assetId, direction, sendAmount, outletRate }) => {
           loading={exec.status === 'pending'}
           onClick={() => exec.run({ assetId, direction, amountInput: sendAmount })}
         >
-          {direction === 'exit' ? `Sell ${twin.symbol} via Uniswap` : `Buy ${twin.symbol} via Uniswap`}
+          {!isConnected
+            ? 'Connect wallet to swap via Uniswap'
+            : !hasAmount
+              ? 'Enter an amount above to enable'
+              : hasAmount && quote.isLoading
+                ? `Quoting ${twin.symbol}/USDC…`
+                : data && !data.available
+                  ? 'No Uniswap route right now'
+                  : direction === 'exit'
+                    ? `Sell ${twin.symbol} via Uniswap`
+                    : `Buy ${twin.symbol} via Uniswap`}
         </Button>
         <div
           style={{

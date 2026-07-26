@@ -19,19 +19,30 @@ const navItems = [
   { path: '/pools', label: 'Pools', icon: '🏊' },
   { path: '/queue', label: 'Delayed Redemptions', icon: '🕐' },
   { path: '/vault', label: 'Vault', icon: '🔒' },
+  { path: '/portfolio', label: 'Portfolio', icon: '💼' },
+  { path: '/assistant', label: 'AI Assistant', icon: '✦' },
 ];
+
+const isMobileViewport = () =>
+  typeof window !== 'undefined' && window.innerWidth < 992;
 
 const Sidebar = () => {
   const location = useLocation();
   const { isDark } = useTheme();
-  const [isMobile, setIsMobile] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  // Start collapsed on small screens — the hamburger opens it on demand.
+  const [isMobile, setIsMobile] = useState(isMobileViewport);
+  const [isCollapsed, setIsCollapsed] = useState(isMobileViewport);
 
   useEffect(() => {
+    let wasMobile = isMobileViewport();
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 992);
-      if (window.innerWidth >= 992) {
-        setIsCollapsed(false);
+      const mobile = isMobileViewport();
+      setIsMobile(mobile);
+      // Only toggle when crossing the breakpoint — mobile browsers fire
+      // resize on URL-bar show/hide and must not slam the menu shut.
+      if (mobile !== wasMobile) {
+        wasMobile = mobile;
+        setIsCollapsed(mobile);
       }
     };
 
@@ -100,26 +111,18 @@ const Sidebar = () => {
           background: 'rgba(255, 255, 255, 0.02)',
         }}>
           {!isCollapsed && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'var(--spacing-sm)',
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center', 
+              width: '100%', 
+              padding: 'var(--spacing-sm) 0',
             }}>
-              <span style={{
-                fontSize: '20px',
-                color: 'var(--primary-container)',
-              }}>
-                ⚡
-              </span>
-              <span style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '18px',
-                fontWeight: '700',
-                color: 'var(--primary)',
-                letterSpacing: '-0.02em',
-              }}>
-                Aetheric
-              </span>
+              <img
+                src="/logo.png"
+                alt="RWA Outlet Logo"
+                style={{ height: '64px', width: 'auto' }}
+              />
             </div>
           )}
           {isCollapsed && (

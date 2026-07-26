@@ -227,15 +227,15 @@ const RedeemPage = () => {
         </div>
 
         {/* Lane selection — auto-selected by best payout, tap to override */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: 'var(--spacing-sm)',
-            margin: 'var(--spacing-md) 0',
-          }}
-        >
-          <LaneTile
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: 'var(--spacing-sm)',
+                margin: 'var(--spacing-md) 0',
+              }}
+              className="redeem-lane-grid">
+           <LaneTile
             selected={lane === 'instant'}
             onClick={() => setLaneOverride('instant')}
             icon="⚡"
@@ -359,24 +359,25 @@ const RedeemPage = () => {
 };
 
 const BalanceRow = ({ logo, symbol, value, usd, hint, active, onClick }) => (
-  <button
-    onClick={onClick}
-    disabled={!onClick}
-    style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: 'var(--spacing-md)',
-      width: '100%',
-      padding: '8px 10px',
-      borderRadius: 'var(--rounded-default)',
-      border: `1px solid ${active ? 'var(--primary-container)' : 'transparent'}`,
-      background: active ? 'rgba(0, 255, 163, 0.06)' : 'transparent',
-      cursor: onClick ? 'pointer' : 'default',
-      transition: 'all var(--transition-fast)',
-      textAlign: 'left',
-    }}
-  >
+   <button
+     onClick={onClick}
+     disabled={!onClick}
+     style={{
+       display: 'flex',
+       alignItems: 'center',
+       justifyContent: 'space-between',
+       gap: 'var(--spacing-md)',
+       width: '100%',
+       padding: '8px 10px',
+       borderRadius: 'var(--rounded-default)',
+       border: `1px solid ${active ? 'var(--primary-container)' : 'transparent'}`,
+       background: active ? 'rgba(0, 255, 163, 0.06)' : 'transparent',
+       cursor: onClick ? 'pointer' : 'default',
+       transition: 'all var(--transition-fast)',
+       textAlign: 'left',
+     }}
+     className="balance-row"
+   >
     <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
       <span style={{ fontSize: '18px' }}>{logo}</span>
       <span>
@@ -529,10 +530,11 @@ const bigInputStyle = {
   border: 'none',
   outline: 'none',
   fontFamily: 'var(--font-display)',
-  fontSize: '32px',
+  fontSize: 'clamp(16px, 4vw, 24px)',
   fontWeight: '600',
   color: 'var(--on-surface)',
   padding: 0,
+  width: '100%',
 };
 
 const maxBtnStyle = {
@@ -550,17 +552,20 @@ const maxBtnStyle = {
 const tokenPillStyle = {
   display: 'flex',
   alignItems: 'center',
-  gap: '6px',
-  padding: '6px 12px',
+  gap: '4px',
+  padding: '4px 6px',
   borderRadius: '999px',
   border: '1px solid var(--border-glass)',
   background: 'var(--surface-glass)',
   fontFamily: 'var(--font-body)',
-  fontSize: '13px',
+  fontSize: '11px',
   fontWeight: '600',
   color: 'var(--on-surface)',
   cursor: 'pointer',
   whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  maxWidth: '100px',
 };
 
 const arrowStyle = {

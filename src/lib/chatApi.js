@@ -34,6 +34,12 @@ export async function streamChat(messages, { onDelta, signal } = {}) {
     throw new Error(message);
   }
 
+  // A 200 that isn't an event stream means the chat API isn't actually
+  // deployed behind this URL (e.g. a stub or a proxy misroute).
+  if (!res.headers.get('content-type')?.includes('text/event-stream')) {
+    throw new Error('The chat API is not available on this backend yet.');
+  }
+
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';

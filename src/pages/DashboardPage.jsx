@@ -132,17 +132,20 @@ const DashboardPage = () => {
         </div>
       </motion.div>
 
-      {/* Top Stats Row */}
-      <motion.div
-        variants={itemVariants}
-        className="stats-grid"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-          gap: 'var(--spacing-lg)',
-          marginBottom: 'var(--outlet-gap)',
-        }}
-      >
+        {/* Top Stats Row */}
+        <motion.div
+          variants={itemVariants}
+          className="stats-grid"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: 'var(--spacing-sm)',
+            marginBottom: 'var(--outlet-gap)',
+            width: '100%',
+            overflow: 'hidden',
+            padding: '0 var(--spacing-xs)',
+          }}
+       >
         {statsCards.map((stat, index) => (
           <GlassCard key={stat.label} level={1} glow={index === 0}>
             <div>
@@ -170,18 +173,21 @@ const DashboardPage = () => {
         ))}
       </motion.div>
 
-      {/* NAV Oracle Section */}
-      <motion.div variants={itemVariants} style={{ marginBottom: 'var(--outlet-gap)' }}>
-        <h2 className="text-headline-lg" style={{ fontSize: '24px', marginBottom: 'var(--spacing-lg)' }}>
-          NAV Oracle
-        </h2>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: 'var(--spacing-lg)',
-          }}
-        >
+        {/* NAV Oracle Section */}
+        <motion.div variants={itemVariants} style={{ marginBottom: 'var(--outlet-gap)', padding: '0 var(--spacing-xs)' }}>
+          <h2 className="text-headline-lg" style={{ fontSize: '20px', marginBottom: 'var(--spacing-md)' }}>
+            NAV Oracle
+          </h2>
+          <div
+            className="nav-grid"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gap: 'var(--spacing-sm)',
+              width: '100%',
+              overflow: 'hidden',
+            }}
+         >
           {RWA_LIST.map((asset) => {
             const navInfo = navs[asset.id];
             const stale = navInfo && Date.now() / 1000 - navInfo.updatedAt > 24 * 3600;
@@ -249,18 +255,21 @@ const DashboardPage = () => {
         </div>
       </motion.div>
 
-      {/* Pool Summary Section */}
-      <motion.div variants={itemVariants} style={{ marginBottom: 'var(--outlet-gap)' }}>
-        <h2 className="text-headline-lg" style={{ fontSize: '24px', marginBottom: 'var(--spacing-lg)' }}>
-          Pool Summary
-        </h2>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: 'var(--spacing-lg)',
-          }}
-        >
+        {/* Pool Summary Section */}
+        <motion.div variants={itemVariants} style={{ marginBottom: 'var(--outlet-gap)', padding: '0 var(--spacing-xs)' }}>
+          <h2 className="text-headline-lg" style={{ fontSize: '20px', marginBottom: 'var(--spacing-md)' }}>
+            Pool Summary
+          </h2>
+          <div
+            className="pool-summary-grid"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gap: 'var(--spacing-sm)',
+              width: '100%',
+              overflow: 'hidden',
+            }}
+         >
           {['express', 'patient', 'market'].map((type) => {
             const info = poolTypes[type];
             const typePools = pools.filter((p) => p.type === type);
@@ -373,17 +382,23 @@ const DashboardPage = () => {
                 rate: formatUSD(trade.rate, 4),
                 time: trade.timestamp ? formatTimeAgo(trade.timestamp * 1000) : '—',
                 tx: (
-                  <a
-                    href={`${EXPLORER_URL}/tx/${trade.txHash}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{
-                      color: 'var(--primary-container)',
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '12px',
-                    }}
-                  >
-                    {formatAddress(trade.txHash, 6, 4)} ↗
+                   <a
+                     href={`${EXPLORER_URL}/tx/${trade.txHash}`}
+                     target="_blank"
+                     rel="noreferrer"
+                     style={{
+                       color: 'var(--primary-container)',
+                       fontFamily: 'var(--font-mono)',
+                       fontSize: '12px',
+                       whiteSpace: 'nowrap',
+                       overflow: 'hidden',
+                       textOverflow: 'ellipsis',
+                       maxWidth: '100px',
+                       display: 'inline-block',
+                     }}
+                     className="tx-hash"
+                   >
+                     {formatAddress(trade.txHash, 6, 4)} ↗
                   </a>
                 ),
               }))}
@@ -392,18 +407,21 @@ const DashboardPage = () => {
         </GlassCard>
       </motion.div>
 
-      {/* Yield Streams Section */}
-      <motion.div variants={itemVariants}>
-        <h2 className="text-headline-lg" style={{ fontSize: '24px', marginBottom: 'var(--spacing-lg)' }}>
-          Yield Streams
-        </h2>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-            gap: 'var(--spacing-lg)',
-          }}
-        >
+        {/* Yield Streams Section */}
+        <motion.div variants={itemVariants} style={{ padding: '0 var(--spacing-xs)' }}>
+          <h2 className="text-headline-lg" style={{ fontSize: '20px', marginBottom: 'var(--spacing-md)' }}>
+            Yield Streams
+          </h2>
+          <div
+            className="yield-grid"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: 'var(--spacing-sm)',
+              width: '100%',
+              overflow: 'hidden',
+            }}
+         >
           {yieldStreams.map((source, index) => (
             <GlassCard key={source.source} level={1} glow={index === 0}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

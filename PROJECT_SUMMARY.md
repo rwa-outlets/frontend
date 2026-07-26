@@ -1,8 +1,8 @@
-# Aetheric Outlets - Frontend Implementation Summary
+# RWA Outlets - Frontend Implementation Summary
 
 ## ✅ Project Complete
 
-I have successfully built a **fully functional UI shell** for RWA Outlets (Aetheric Outlets) based on your implementation plan. The project includes all components, pages, design tokens, and mock data as specified.
+I have successfully built a **fully functional UI shell** for RWA Outlets (RWA Outlets) based on your implementation plan. The project includes all components, pages, design tokens, and mock data as specified.
 
 ## 📁 Project Structure Created
 
@@ -93,7 +93,7 @@ frontend-1/
 ### 1. Home Page (`/`)
 ✅ Full-screen landing (no layout shell)  
 ✅ Animated outlet SVG with plug-in animation  
-✅ Hero text "Aetheric Outlets" (72px Manrope)  
+✅ Hero text "RWA Outlets" (72px Manrope)  
 ✅ Subtitle with tech stack  
 ✅ "Enter App" CTA button → /dashboard  
 ✅ "Learn More" secondary button  

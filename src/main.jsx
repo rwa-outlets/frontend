@@ -14,6 +14,8 @@ import PoolsPage from './pages/PoolsPage';
 import PoolDetailPage from './pages/PoolDetailPage';
 import QueuePage from './pages/QueuePage';
 import VaultPage from './pages/VaultPage';
+import AssistantPage from './pages/AssistantPage';
+import PortfolioPage from './pages/PortfolioPage';
 import './index.css';
 
 /**
@@ -47,6 +49,8 @@ const AnimatedRoutes = () => {
           <Route path="/pools/:poolId" element={<PoolDetailPage />} />
           <Route path="/queue" element={<QueuePage />} />
           <Route path="/vault" element={<VaultPage />} />
+          <Route path="/assistant" element={<AssistantPage />} />
+          <Route path="/portfolio" element={<PortfolioPage />} />
         </Route>
         
         {/* Catch-all route - redirect to dashboard */}

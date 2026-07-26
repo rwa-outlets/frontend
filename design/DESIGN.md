@@ -1,5 +1,5 @@
 ---
-name: Aetheric Outlets
+name: RWA Outlets
 colors:
   surface: '#0c150f'
   surface-dim: '#0c150f'
