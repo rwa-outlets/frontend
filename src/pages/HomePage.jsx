@@ -143,7 +143,7 @@ const HomePage = () => {
               transition: { duration: 0.3 }
             }}
           >
-            The Graph, Uniswap, 1inch, and ENS
+            The Graph, Uniswap, 1inch, and Hedera
           </motion.span>.
         </motion.p>
 
